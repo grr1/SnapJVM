@@ -14,7 +14,7 @@ void printUsage(char * argv0)
 	fprintf(stderr, "Usage\n");
 	fprintf(stderr, "  %s [-c] <filename>.class\n", argv0);
     fprintf(stderr, "Example:\n");
-    fprintf(stderr, "  %s -c -v Hello\n", argv0);
+    fprintf(stderr, "  %s -c -v test/Hello\n", argv0);
     fprintf(stderr, "Optiones:\n");
     fprintf(stderr, "    -c - Print class information\n");
     fprintf(stderr, "    -n - Don't execute\n");
