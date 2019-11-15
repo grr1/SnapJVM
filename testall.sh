@@ -1,13 +1,14 @@
 #!/bin/bash
 
-export CFILES="Hello Add"
+export CLASSFILES="Hello"
+export EXPERIMENTALFILES="Add"
 
 echo ========== TESTALL SNAPJVM =============
 
 echo 0 > test/tests_passed
 echo 0 > test/tests_failed
 
-for test in $CFILES; do
+for test in $CLASSFILES; do
 (	
 	echo ------ Running $test --------- 
 	cd test;

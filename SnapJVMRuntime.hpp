@@ -14,19 +14,25 @@ enum JVMRuntimeCallNumber {
 	VirtualCall=1
 };
 
-typedef void * InvokeJVMRuntimeFuncPtr(long callNumer, void * a, void * b, void * c, void * d, void * e, void * f);
+class SnapJVMRuntime;
+
+typedef void * (* InvokeJVMRuntimeFuncPtr)(SnapJVMRuntime * runTime, Object * o, void *a, void *b, void *c, void *d);
+
+enum SnapJVMRuntimeCallTimes{
+	JVMRuntime_invokevirtual, // bytecode for _invokevirtual
+	JVMRuntime_max
+};
 
 class SnapJVMRuntime {
-	// Make sure it is the first member variable since it is called from JIT code
-	InvokeJVMRuntimeFuncPtr _invokeJVMRuntime;
-
-	///////////////////////////////////////////
-
-	static SnapJVMRuntime * _theJVMRuntime;
+	InvokeJVMRuntimeFuncPtr _runtimeDispatchTable[JVMRuntime_max];
 
 	static bool _verboseMode;
 
+	///////////////////////////////////////////
+
 public:
+	static SnapJVMRuntime * _theJVMRuntime;
+
 	static SnapJVMRuntime * TheJVMRuntime();
 	SnapJVMRuntime();
 	virtual ~SnapJVMRuntime();
@@ -34,6 +40,9 @@ public:
 	void invokeMethod( Object * o, char * methodName );
 	static void setVerboseMode(bool verboseMode);
 	static bool isVerboseMode();
+
+	// Calls runtime
+	static void * runtime_invokevirtual(SnapJVMRuntime * runTime, Object * o, void *a, void *b, void *c, void *d);
 };
 
 inline SnapJVMRuntime *

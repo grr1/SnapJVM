@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
     bool executeMain = true;
     SnapJVMRuntime::setVerboseMode(false);
 
+    SnapJVMRuntime::_theJVMRuntime = new SnapJVMRuntime();
+
     while ((opt = getopt(argc, argv, "cnv")) != -1) {
         switch (opt) {
         case 'c':

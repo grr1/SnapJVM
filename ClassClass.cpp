@@ -306,9 +306,14 @@ ClassClass::print()
 							printf("\t// ");info->printShort(this);
 						}
 					}
+					else if ((flags & ByteCode::Flags::_fmt_bc) == ByteCode::Flags::_fmt_bc) {
+							u1 * p = uptr+1;
+							u1 arg = ClassParser::readU1(p);
+							printf(" %d",arg);
+					}
 					printf("\n");
 
-					//printFlags(flags);
+					printFlags(flags);
 					//printf("         %d: %d\n",k, attrInfo->infoArray[k]);
 					//k++;
 					k+=ByteCode::_lengths[c];

@@ -11,6 +11,7 @@
 #include <string>
 #include "ClassClass.hpp"
 #include "Object.hpp"
+#include "SnapJVMRuntime.hpp"
 
 class Method {
 public:
@@ -21,6 +22,7 @@ public:
 		unsigned long _maxStack;
 		unsigned long _maxLocals;
 		unsigned long _maxArgs;
+		InvokeJVMRuntimeFuncPtr _callMethod;
 public:
 	Method();
 	void invoke( Object * o);
