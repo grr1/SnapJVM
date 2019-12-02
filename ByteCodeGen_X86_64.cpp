@@ -1065,78 +1065,63 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         }
         break;
 
-    case ByteCode::_ifeq:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifne:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_iflt:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifge:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifgt:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifle:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpeq:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpne:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmplt:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpge:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpgt:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmple:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_acmpeq:{
-          notImplemented(code);
-        }
-        break;
-
+    case ByteCode::_ifeq:
+    case ByteCode::_ifne:
+    case ByteCode::_iflt:
+    case ByteCode::_ifge:
+    case ByteCode::_ifgt:
+    case ByteCode::_ifle:
+    case ByteCode::_if_icmpeq:
+    case ByteCode::_if_icmpne:
+    case ByteCode::_if_icmplt:
+    case ByteCode::_if_icmpge:
+    case ByteCode::_if_icmpgt:
+    case ByteCode::_if_icmple:
+    case ByteCode::_if_acmpeq:
     case ByteCode::_if_acmpne:{
-          notImplemented(code);
-        }
-        break;
-
+      int cmp_to_zero = code < ByteCode::_if_icmpeq ? 1 : 0;
+      int offset = code - (cmp_to_zero ? ByteCode::_ifeq : ByteCode::_if_icmpeq);
+      std::string cmpflag = "";
+      if(offset == 0){
+	cmpflag = "e";
+      }else if(offset == 1){
+	cmpflag = "ne";
+      }else if(offset == 2){
+	cmpflag = "l";
+      }else if(offset == 3){
+	cmpflag = "ge";
+      }else if(offset == 4){
+	cmpflag = "g";
+      }else if(offset == 5){
+	cmpflag = "le";
+      }
+      //compare the twop two values on the operand stack; if succeeds, jump to the address
+      u1 * p = &codeArray[k+1];
+      u2 arg = ClassParser::readU2(p) + k;
+      *this->_codeStrStream << "       #"
+			    << ByteCode::_name[code] << " #"<< std::dec << (int) arg <<"\n";
+      
+      //compare the top two numbers in the operand stack
+      *this->_codeStrStream << "       movq %rcx, %" << getReg() << "\n";
+      popVirtualStack();
+      if(cmp_to_zero){
+	*this->_codeStrStream << "       cmpq %rcx, $0\n";
+      }else{
+	*this->_codeStrStream << "       movq %rdx, %" << getReg() << "\n";
+	popVirtualStack();
+	*this->_codeStrStream << "       cmpq %rcx, %rdx\n";
+      }
+      
+      *this->_codeStrStream << "       j" << cmpflag << " offset_" << std::dec << arg << "\n";
+    }
+      break;
+      
     case ByteCode::_goto:{
-          notImplemented(code);
+          u1 * p = &codeArray[k+1];
+	  u2 arg = ClassParser::readU2(p) + k;
+	  *this->_codeStrStream << "       #"
+				<< ByteCode::_name[code] << " #"<< std::dec << (int) arg <<"\n";
+	  *this->_codeStrStream << "       jmp offset_" << std::dec << arg << "\n";
         }
         break;
 
