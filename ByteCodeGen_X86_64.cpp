@@ -1077,40 +1077,40 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_if_icmpge:
     case ByteCode::_if_icmpgt:
     case ByteCode::_if_icmple:{
-      int cmp_to_zero = code < ByteCode::_if_icmpeq ? 1 : 0;
-      int offset = code - (cmp_to_zero ? ByteCode::_ifeq : ByteCode::_if_icmpeq);
-      std::string cmpflag = "";
-      if(offset == 0){
-	cmpflag = "e";
-      }else if(offset == 1){
-	cmpflag = "ne";
-      }else if(offset == 2){
-	cmpflag = "l";
-      }else if(offset == 3){
-	cmpflag = "ge";
-      }else if(offset == 4){
-	cmpflag = "g";
-      }else if(offset == 5){
-	cmpflag = "le";
-      }
-      //compare the twop two values on the operand stack; if succeeds, jump to the address
-      u1 * p = &codeArray[k+1];
-      u2 arg = ClassParser::readU2(p) + k;
-      *this->_codeStrStream << "       #"
-			    << ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+			int cmp_to_zero = code < ByteCode::_if_icmpeq ? 1 : 0;
+			int offset = code - (cmp_to_zero ? ByteCode::_ifeq : ByteCode::_if_icmpeq);
+			std::string cmpflag = "";
+			if(offset == 0){
+				cmpflag = "e";
+			}else if(offset == 1){
+				cmpflag = "ne";
+			}else if(offset == 2){
+				cmpflag = "l";
+			}else if(offset == 3){
+				cmpflag = "ge";
+			}else if(offset == 4){
+				cmpflag = "g";
+			}else if(offset == 5){
+				cmpflag = "le";
+			}
+			//compare the twop two values on the operand stack; if succeeds, jump to the address
+			u1 * p = &codeArray[k+1];
+			u2 arg = ClassParser::readU2(p) + k;
+			*this->_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
       
-      //compare the top two numbers in the operand stack
-      popVirtualStack();
-      const char* reg1 = getReg();
-      if(cmp_to_zero){
-	//$0 has to be the first operand for GAS/AT&T syntax
-	*this->_codeStrStream << "       cmpq $0, %" << reg1 << "\n";
-      }else{
-	popVirtualStack();
-	*this->_codeStrStream << "       cmpq %" << reg1 << ", %" << getReg() <<"\n";
-      }
+			//compare the top two numbers in the operand stack
+			popVirtualStack();
+			const char* reg1 = getReg();
+			if(cmp_to_zero){
+				//$0 has to be the first operand for GAS/AT&T syntax
+				*this->_codeStrStream << "       cmpq $0, %" << reg1 << "\n";
+			}else{
+				popVirtualStack();
+				*this->_codeStrStream << "       cmpq %" << reg1 << ", %" << getReg() <<"\n";
+			}
       
-      *this->_codeStrStream << "       j" << cmpflag << " offset_" << std::dec << arg << "\n";
+			*this->_codeStrStream << "       j" << cmpflag << " offset_" << std::dec << arg << "\n";
     }
       break;
 
@@ -1126,11 +1126,11 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
       
     case ByteCode::_goto:{
-          u1 * p = &codeArray[k+1];
-	  u2 arg = ClassParser::readU2(p) + k;
-	  *this->_codeStrStream << "       #"
-				<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
-	  *this->_codeStrStream << "       jmp offset_" << std::dec << arg << "\n";
+			u1 * p = &codeArray[k+1];
+			u2 arg = ClassParser::readU2(p) + k;
+			*this->_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+			*this->_codeStrStream << "       jmp offset_" << std::dec << arg << "\n";
         }
         break;
 
