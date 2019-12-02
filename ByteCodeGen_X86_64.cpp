@@ -206,7 +206,7 @@ ByteCodeGen_X86_64::codeGen()
 				}
 				*_codeStrStream << "\n";
 				while (k<_code_length) {
-					*_codeStrStream << "offset_" << k << ":\n";
+					*_codeStrStream << "offset_" << std::dec << k << ":\n";
 					ByteCode::Code c =  (ByteCode::Code) codeArray[k];
 
 					if (SnapJVMRuntime::isVerboseMode()) {
