@@ -1097,17 +1097,17 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
       u1 * p = &codeArray[k+1];
       u2 arg = ClassParser::readU2(p) + k;
       *this->_codeStrStream << "       #"
-			    << ByteCode::_name[code] << " #"<< std::dec << (int) arg <<"\n";
+			    << ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
       
       //compare the top two numbers in the operand stack
-      *this->_codeStrStream << "       movq %rcx, %" << getReg() << "\n";
       popVirtualStack();
+      const char* reg1 = getReg();
       if(cmp_to_zero){
-	*this->_codeStrStream << "       cmpq %rcx, $0\n";
+	//$0 has to be the first operand for GAS/AT&T syntax
+	*this->_codeStrStream << "       cmpq $0, %" << reg1 << "\n";
       }else{
-	*this->_codeStrStream << "       movq %rdx, %" << getReg() << "\n";
 	popVirtualStack();
-	*this->_codeStrStream << "       cmpq %rcx, %rdx\n";
+	*this->_codeStrStream << "       cmpq %" << reg1 << ", %" << getReg() <<"\n";
       }
       
       *this->_codeStrStream << "       j" << cmpflag << " offset_" << std::dec << arg << "\n";
@@ -1129,7 +1129,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
           u1 * p = &codeArray[k+1];
 	  u2 arg = ClassParser::readU2(p) + k;
 	  *this->_codeStrStream << "       #"
-				<< ByteCode::_name[code] << " #"<< std::dec << (int) arg <<"\n";
+				<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
 	  *this->_codeStrStream << "       jmp offset_" << std::dec << arg << "\n";
         }
         break;
