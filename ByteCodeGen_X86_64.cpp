@@ -1076,9 +1076,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_if_icmplt:
     case ByteCode::_if_icmpge:
     case ByteCode::_if_icmpgt:
-    case ByteCode::_if_icmple:
-    case ByteCode::_if_acmpeq:
-    case ByteCode::_if_acmpne:{
+    case ByteCode::_if_icmple:{
       int cmp_to_zero = code < ByteCode::_if_icmpeq ? 1 : 0;
       int offset = code - (cmp_to_zero ? ByteCode::_ifeq : ByteCode::_if_icmpeq);
       std::string cmpflag = "";
@@ -1115,6 +1113,17 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
       *this->_codeStrStream << "       j" << cmpflag << " offset_" << std::dec << arg << "\n";
     }
       break;
+
+      
+    case ByteCode::_if_acmpeq:{
+    	  notImplemented(code);
+        }
+        break;
+	
+    case ByteCode::_if_acmpne:{
+    	  notImplemented(code);
+        }
+        break;
       
     case ByteCode::_goto:{
           u1 * p = &codeArray[k+1];
