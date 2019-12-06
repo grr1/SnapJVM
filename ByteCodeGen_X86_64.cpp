@@ -381,7 +381,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_sipush:{
-          notImplemented(code);
+			u1 * p = &codeArray[k+1];
+			u2 arg = ClassParser::readU2(p);
+			*_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
+			pushVirtualStack();
         }
         break;
 
@@ -1304,7 +1309,11 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_goto_w:{
-          notImplemented(code);
+			u1 * p = &codeArray[k+1];
+			u4 arg = ClassParser::readU4(p) + k;
+			*this->_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+			*this->_codeStrStream << "       jmp offset_" << std::dec << arg << "\n";
         }
         break;
 
