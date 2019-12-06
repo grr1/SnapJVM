@@ -966,7 +966,38 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_iinc:{
-          notImplemented(code);
+      notImplemented(code);
+
+      /**
+       * Code generation below should be correct;
+       * There might be a problem with parsing iinc
+       * as the program will stop parsing the rest if encountering iinc
+       *   -- Muyuan 12/6/19
+       */
+
+      
+      /*
+      u1 * p = &codeArray[k+1];
+      int localvar = (int)ClassParser::readU1(p);
+      int incvalue = (int)ClassParser::readU1(p);
+      if(incvalue > 127) incvalue -= 256; //as incvalue is supposed to be a signed byte
+      *_codeStrStream << "       #" << ByteCode::_name[code] << " " << localvar << " " << (int)incvalue <<"\n";
+      const char* reg = this->getReg();
+      
+      *_codeStrStream << "       movq    -"
+		      << 8 * (_stackFrameLocalVars+localvar) << "(%rbp),%" << reg << "\n";
+      if(incvalue == 1){
+	*_codeStrStream << "       incq    %" << reg << "\n";
+      }else if(incvalue == -1){
+	*_codeStrStream << "       decq    %" << reg << "\n";
+      }else{
+	*_codeStrStream << "       addq    $" << incvalue << "," << "%" << reg << "\n";
+      }
+
+      *_codeStrStream << "       movq    %" << reg << "," << "-"
+							  << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
+      
+      */
         }
         break;
 
