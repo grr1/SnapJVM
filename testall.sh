@@ -13,6 +13,8 @@ for test in $CLASSFILES; do
 	echo ------ Running $test --------- 
 	cd test;
 	rm -f $test.java.out $test.snap-jvm.out
+	rm -f $test.class
+	javac $test.java
         java $test > $test.java.out
 	../snap-jvm $test  > $test.snap-jvm.out
 	diff $test.java.out $test.snap-jvm.out
