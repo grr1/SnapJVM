@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export CLASSFILES="Hello"
-export EXPERIMENTALFILES="Add"
+export CLASSFILES="Hello Loop Compare"
+export EXPERIMENTALFILES="Add Increment"
 
 echo ========== TESTALL SNAPJVM =============
 

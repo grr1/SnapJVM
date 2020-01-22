@@ -206,7 +206,7 @@ ByteCodeGen_X86_64::codeGen()
 				}
 				*_codeStrStream << "\n";
 				while (k<_code_length) {
-					*_codeStrStream << "offset_" << k << ":\n";
+					*_codeStrStream << "offset_" << std::dec << k << ":\n";
 					ByteCode::Code c =  (ByteCode::Code) codeArray[k];
 
 					if (SnapJVMRuntime::isVerboseMode()) {
@@ -377,7 +377,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_sipush:{
-          notImplemented(code);
+			u1 * p = &codeArray[k+1];
+			u2 arg = ClassParser::readU2(p);
+			*_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
+			pushVirtualStack();
         }
         break;
 
@@ -1000,6 +1005,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_iinc:{
+<<<<<<< HEAD
 		u1* p = &codeArray[k+1];
 		u1 arg1 = ClassParser::readU1(p);
 		p = &codeArray[k+2];
@@ -1008,6 +1014,40 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 		*_codeStrStream << "       addq    $" << arg2 << ","
 			<< "-" << 8*(_stackFrameLocalVars+arg1) << "(%rbp)\n";
+=======
+      notImplemented(code);
+
+      /**
+       * Code generation below should be correct;
+       * There might be a problem with parsing iinc
+       * as the program will stop parsing the rest if encountering iinc
+       *   -- Muyuan 12/6/19
+       */
+
+      
+      /*
+      u1 * p = &codeArray[k+1];
+      int localvar = (int)ClassParser::readU1(p);
+      int incvalue = (int)ClassParser::readU1(p);
+      if(incvalue > 127) incvalue -= 256; //as incvalue is supposed to be a signed byte
+      *_codeStrStream << "       #" << ByteCode::_name[code] << " " << localvar << " " << (int)incvalue <<"\n";
+      const char* reg = this->getReg();
+      
+      *_codeStrStream << "       movq    -"
+		      << 8 * (_stackFrameLocalVars+localvar) << "(%rbp),%" << reg << "\n";
+      if(incvalue == 1){
+	*_codeStrStream << "       incq    %" << reg << "\n";
+      }else if(incvalue == -1){
+	*_codeStrStream << "       decq    %" << reg << "\n";
+      }else{
+	*_codeStrStream << "       addq    $" << incvalue << "," << "%" << reg << "\n";
+      }
+
+      *_codeStrStream << "       movq    %" << reg << "," << "-"
+							  << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
+      
+      */
+>>>>>>> 6a9f63c99de274c09d82e6411864f898417b44b1
         }
         break;
 
@@ -1114,78 +1154,72 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         }
         break;
 
-    case ByteCode::_ifeq:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifne:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_iflt:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifge:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifgt:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_ifle:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpeq:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpne:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmplt:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpge:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_if_icmpgt:{
-          notImplemented(code);
-        }
-        break;
-
+    case ByteCode::_ifeq:
+    case ByteCode::_ifne:
+    case ByteCode::_iflt:
+    case ByteCode::_ifge:
+    case ByteCode::_ifgt:
+    case ByteCode::_ifle:
+    case ByteCode::_if_icmpeq:
+    case ByteCode::_if_icmpne:
+    case ByteCode::_if_icmplt:
+    case ByteCode::_if_icmpge:
+    case ByteCode::_if_icmpgt:
     case ByteCode::_if_icmple:{
-          notImplemented(code);
-        }
-        break;
+			int cmp_to_zero = code < ByteCode::_if_icmpeq ? 1 : 0;
+			int offset = code - (cmp_to_zero ? ByteCode::_ifeq : ByteCode::_if_icmpeq);
+			std::string cmpflag = "";
+			if(offset == 0){
+				cmpflag = "e";
+			}else if(offset == 1){
+				cmpflag = "ne";
+			}else if(offset == 2){
+				cmpflag = "l";
+			}else if(offset == 3){
+				cmpflag = "ge";
+			}else if(offset == 4){
+				cmpflag = "g";
+			}else if(offset == 5){
+				cmpflag = "le";
+			}
+			//compare the twop two values on the operand stack; if succeeds, jump to the address
+			u1 * p = &codeArray[k+1];
+			u2 arg = ClassParser::readU2(p) + k;
+			*this->_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+      
+			//compare the top two numbers in the operand stack
+			popVirtualStack();
+			const char* reg1 = getReg();
+			if(cmp_to_zero){
+				//$0 has to be the first operand for GAS/AT&T syntax
+				*this->_codeStrStream << "       cmpq $0, %" << reg1 << "\n";
+			}else{
+				popVirtualStack();
+				*this->_codeStrStream << "       cmpq %" << reg1 << ", %" << getReg() <<"\n";
+			}
+      
+			*this->_codeStrStream << "       j" << cmpflag << " offset_" << std::dec << arg << "\n";
+    }
+      break;
 
+      
     case ByteCode::_if_acmpeq:{
-          notImplemented(code);
+    	  notImplemented(code);
         }
         break;
-
+	
     case ByteCode::_if_acmpne:{
-          notImplemented(code);
+    	  notImplemented(code);
         }
         break;
-
+      
     case ByteCode::_goto:{
-          notImplemented(code);
+			u1 * p = &codeArray[k+1];
+			u2 arg = ClassParser::readU2(p) + k;
+			*this->_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+			*this->_codeStrStream << "       jmp offset_" << std::dec << arg << "\n";
         }
         break;
 
@@ -1359,7 +1393,11 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_goto_w:{
-          notImplemented(code);
+			u1 * p = &codeArray[k+1];
+			u4 arg = ClassParser::readU4(p) + k;
+			*this->_codeStrStream << "       #"
+					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
+			*this->_codeStrStream << "       jmp offset_" << std::dec << arg << "\n";
         }
         break;
 
