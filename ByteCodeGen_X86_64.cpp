@@ -818,7 +818,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 		const char* arg2 = this->getReg();
 		pushVirtualStack();
 		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
-		*_codeStrStream << "       subq    %" << arg1 < "," << "%" << arg2 << "\n";
+		*_codeStrStream << "       subq    %" << arg1 << "," << "%" << arg2 << "\n";
         }
         break;
 
@@ -844,7 +844,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 		const char* arg2 = this->getReg();
 		pushVirtualStack();
 		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
-		*_codeStrStream << "       imulq    %" << arg1 < "," << "%" << arg2 << "\n";
+		*_codeStrStream << "       imulq    %" << arg1 << "," << "%" << arg2 << "\n";
         }
         break;
 
@@ -1005,7 +1005,6 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_iinc:{
-<<<<<<< HEAD
 		u1* p = &codeArray[k+1];
 		u1 arg1 = ClassParser::readU1(p);
 		p = &codeArray[k+2];
@@ -1014,8 +1013,8 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 		*_codeStrStream << "       addq    $" << arg2 << ","
 			<< "-" << 8*(_stackFrameLocalVars+arg1) << "(%rbp)\n";
-=======
-      notImplemented(code);
+
+//      notImplemented(code);
 
       /**
        * Code generation below should be correct;
@@ -1047,7 +1046,6 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 							  << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
       
       */
->>>>>>> 6a9f63c99de274c09d82e6411864f898417b44b1
         }
         break;
 
