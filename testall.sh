@@ -32,9 +32,9 @@ for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 	# generated expected output
 	java $test_name > ../$TEST_OUT_FOLDER/$test_name.java.out
 
-	# generate snap-jvm output
+	# generate snap-jvm output, printing when an opcode is unimplemented
 	# NOTE: `snap-jvm` expects "filename" instead of "filename.class"
-	../snap-jvm $test_name > ../$TEST_OUT_FOLDER/$test_name.snap-jvm.out
+	../snap-jvm -t $test_name > ../$TEST_OUT_FOLDER/$test_name.snap-jvm.out
 
 	# compare output, then make decision based on exit status of `diff`
 	cd ../$TEST_OUT_FOLDER/

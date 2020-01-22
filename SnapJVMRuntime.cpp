@@ -10,6 +10,7 @@
 
 SnapJVMRuntime * SnapJVMRuntime::_theJVMRuntime;
 bool SnapJVMRuntime::_verboseMode;
+bool SnapJVMRuntime::_testMode;
 
 SnapJVMRuntime::SnapJVMRuntime() {
 	// TODO Auto-generated constructor stub
