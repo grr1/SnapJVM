@@ -745,7 +745,14 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dup:{
-          notImplemented(code);
+	  const char * arg1 = this->getReg();
+          popVirtualStack();
+	  const char * arg2 = this->getReg();
+	  pushVirtualStack();
+	  pushVirtualStack();
+	  
+	  *_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
+	  *_codeStrStream << "       movq    %" << arg2 << "," << "%" << arg1 << "\n";
         }
         break;
 
