@@ -502,7 +502,10 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dload_1:{
-          notImplemented(code);
+            int localvar = code - ByteCode::_dload_0;
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movsd    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
@@ -660,7 +663,10 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dstore_1:{
-          notImplemented(code);
+            popVirtualStack();
+            int localvar = code - ByteCode::_dstore_0;
+            *_codeStrStream << "    #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movsd    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
         }
         break;
 
@@ -808,7 +814,13 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dadd:{
-          notImplemented(code);
+            popVirtualStack();
+            const char * arg1 = this->getReg();
+            popVirtualStack();
+            const char * arg2 = this->getReg();
+            pushVirtualStack();
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      addsd    %" << arg1 << "," << "%" << arg2 << "\n";
         }
         break;
 
@@ -828,7 +840,13 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dsub:{
-          notImplemented(code);
+            popVirtualStack();
+            const char * arg1 = this->getReg();
+            popVirtualStack();
+            const char * arg2 = this->getReg();
+            pushVirtualStack();
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      addsd    %" << arg1 << "," << "%" << arg2 << "\n";
         }
         break;
 
