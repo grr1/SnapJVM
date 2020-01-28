@@ -304,6 +304,10 @@ simplePrintf(const char * s) {
 	printf("%s\n",s);
 }
 
+void simplePrintfD(const double d){
+    printf("%lf\n",d);
+}
+
 void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) {
 	switch(code) {
 	case ByteCode::_nop:{
@@ -414,7 +418,21 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_ldc2_w:{
-          notImplemented(code);
+            u1 * p1 = &codeArray[k+1];
+            u1 arg1 = ClassParser::readU1(p1);
+            u1 * p2 = &codeArray[k+2];
+            u1 arg2 = ClassParser::readU1(p2);
+            int arg = ((int)arg1) << 8;
+            arg = arg | ((int)arg2);
+            *this->_codeStrStream << "       #" << ByteCode::_name[code] << " #" << arg << "\n";
+            if (SnapJVMRuntime::isVerboseMode()){
+                printf("arg=%d\n",arg);
+            }
+            ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            if (info != NULL){
+                *this->_codeStrStream << "       movq   $0x" << std::hex << (unsigned long) info->toData(_classClass) << ", %"<< this->getReg() << "\n";
+            }
+            pushVirtualStack();
         }
         break;
 
@@ -502,7 +520,10 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dload_1:{
-          notImplemented(code);
+            int localvar = code - ByteCode::_dload_0;
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movsd    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
@@ -592,7 +613,11 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dstore:{
-          notImplemented(code);
+            popVirtualStack();
+            u1 * p = &codeArray[k+1];
+            u1 arg = ClassParser::readU1(p);
+            int localvar = (int)arg;
+            printf("ddd\t%d\n",localvar);
         }
         break;
 
@@ -660,7 +685,10 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dstore_1:{
-          notImplemented(code);
+            popVirtualStack();
+            int localvar = code - ByteCode::_dstore_0;
+            *_codeStrStream << "    #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movsd    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
         }
         break;
 
@@ -801,7 +829,13 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dadd:{
-          notImplemented(code);
+          popVirtualStack();
+          const char * arg1 = this->getReg();
+          popVirtualStack();
+          const char * arg2 = this->getReg();
+          pushVirtualStack();
+          *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+          *_codeStrStream << "      addsd    %" << arg1 << "," << "%" << arg2 << "\n";
         }
         break;
 
@@ -821,7 +855,13 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dsub:{
-          notImplemented(code);
+          popVirtualStack();
+          const char * arg1 = this->getReg();
+          popVirtualStack();
+          const char * arg2 = this->getReg();
+          pushVirtualStack();
+          *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+          *_codeStrStream << "      subsd    %" << arg2 << "," << "%" << arg1 << "\n"; // not sure which arg should go first
         }
         break;
 
@@ -1248,7 +1288,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     	    *this->_codeStrStream << "";
 			*this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
 			*this->_codeStrStream << "       mov    $0x" << std::hex
-		  						  << (unsigned long) simplePrintf << ",%rax" << "\n";
+		  						  << (unsigned long) simplePrintfD << ",%rax" << "\n";
 			*this->_codeStrStream << "       call   *%rax\n";
 			//notImplemented(code);
         }
