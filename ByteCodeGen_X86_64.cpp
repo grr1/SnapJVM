@@ -1102,7 +1102,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_l2d:{
-          notImplemented(code);
+n         notImplemented(code);
         }
         break;
 
@@ -1266,31 +1266,19 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         }
         break;
 
-    case ByteCode::_ireturn:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_lreturn:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_freturn:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_dreturn:{
-          notImplemented(code);
-        }
-        break;
-
+    case ByteCode::_ireturn:
+    case ByteCode::_lreturn:
+    case ByteCode::_freturn:
+    case ByteCode::_dreturn:
     case ByteCode::_areturn:{
-          notImplemented(code);
-        }
-        break;
+        const char* reg1 = getReg();
+        //popVirtualStack();
 
+        //*_codeStrStream << "       movq    %" << reg1 << "," << "%rax" << "\n";
+
+        //*_codeStrStream << "       movq    %"reg1", -" << 8 * (_stackFrameLocalVars) << "(%rbp)" << "\n";
+
+        }
     case ByteCode::_return:{
     	restoreRegsBeforeReturn();
 		*_codeStrStream << "       # " << ByteCode::_name[code] << "\n";
