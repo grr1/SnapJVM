@@ -9,6 +9,7 @@ fi
 # may change these to specify location of tests cases/output
 TEST_FOLDER="test"
 TEST_OUT_FOLDER="test_out"
+TEST_SRC_FOLDER="test_src"
 TESTS_PASSED="tests_passed"
 TESTS_FAILED="tests_failed"
 
@@ -23,7 +24,9 @@ for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 (
 	# check for ".java" suffix
 	if [[ "${test_file: -5}" == ".java" ]] ; then
+		echo "-----"
 		echo -e "\033[31mERROR: .java files belong in test_src\033[0m"
+		echo -e "Move \033[35m$test_file\033[0m to ./$TEST_SRC_FOLDER/, compile, and move the .class file to ./$TEST_FOLDER/"
 		continue
 	fi
 
@@ -40,7 +43,7 @@ for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 
 	# generate snap-jvm output, printing when an opcode is unimplemented
 	# NOTE: `snap-jvm` expects "filename" instead of "filename.class"
-	../snap-jvm -t $test_name 1> ../$TEST_OUT_FOLDER/$test_name.snap-jvm.out 2> /dev/null
+	../snap-jvm -t $test_name 1> ../$TEST_OUT_FOLDER/$test_name.snap-jvm.out
 
 	# compare output, then make decision based on exit status of `diff`
 	cd ../$TEST_OUT_FOLDER/
