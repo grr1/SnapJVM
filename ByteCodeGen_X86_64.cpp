@@ -1252,10 +1252,10 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_getstatic:{
 		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 		u1 * p = &codeArray[k+1];
-		u2 index = (u2) ClassParser::readU1() << 8 | (u2) ClassParser::readU1();
-		CONSTANT_Fieldref_info fieldref_info = _classClass->_constantPoolInfoArray[index];
-		CONSTANT_String_info nameStringInfo = _classClass->_constantPoolInfoArray[fieldref_info.name_and_type_index];
-		u8 value = _classClass->getField(nameStringInfo.toData(_classClass));
+		u2 index = (u2) ClassParser::readU1(p) << 8 | (u2) ClassParser::readU1(p);
+		CONSTANT_Fieldref_info * fieldref_info = dynamic_cast<CONSTANT_Fieldref_info *>(_classClass->_constantPoolInfoArray[index]);
+		CONSTANT_String_info * nameStringInfo = dynamic_cast<CONSTANT_String_info *>(_classClass->_constantPoolInfoArray[fieldref_info->name_and_type_index]);
+		u8 value = _classClass->getField(std::string((char *) nameStringInfo->toData(_classClass)));
 		*_codeStrStream << "	   movq	   $" << value << ", %" << getReg() << "\n";
 			pushVirtualStack();
     }
@@ -1264,12 +1264,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_putstatic:{
 		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 		u1 * p = &codeArray[k+1];
-		u2 index = (u2) ClassParser::readU1() << 8 | (u2) ClassParser::readU1();
-		CONSTANT_Fieldref_info fieldref_info = _classClass->_constantPoolInfoArray[index];
-		CONSTANT_String_info nameStringInfo = _classClass->_constantPoolInfoArray[fieldref_info.name_and_type_index];
-		u8 value = getReg();
+		u2 index = (u2) ClassParser::readU1(p) << 8 | (u2) ClassParser::readU1(p);
+		CONSTANT_Fieldref_info * fieldref_info = dynamic_cast<CONSTANT_Fieldref_info *>(_classClass->_constantPoolInfoArray[index]);
+		CONSTANT_String_info * nameStringInfo = dynamic_cast<CONSTANT_String_info *>(_classClass->_constantPoolInfoArray[fieldref_info->name_and_type_index]);
+		u8 value;
 		popVirtualStack();
-		_classClass->addField(nameStringInfo.toData(_classClass), value);
+		_classClass->addField(std::string((char *) nameStringInfo->toData(_classClass)), value);
 		pushVirtualStack();
 	}
         break;

@@ -413,8 +413,8 @@ ClassParser::parseFields()
 		}
 	*/
 
-	int numStaticFields = 0;
-	int numLocalFields = 0;
+	u8 numStaticFields = 0;
+	u8 numLocalFields = 0;
 	_classClass->_fields_count = readU2();
 	_classClass->_fieldsArray = new FieldInfoPtr[_classClass->_fields_count];
 	for (int i = 0; i < _classClass->_fields_count; i++) {
@@ -436,15 +436,9 @@ ClassParser::parseFields()
 			}
 		}
 		//Add Field to the appropriate map
-		if ((fieldInfo->access_flags & 0x0008) = 0x0008){
-			_classClass->_staticVars[
-					(CONSTANT_String_info) _classClass->_constantPoolInfoArray[
-							fieldInfo->name_index]->toData()] = numStaticFields++;
-		} else{
-			_classClass->_instanceVars[
-					(CONSTANT_String_info) _classClass->_constantPoolInfoArray[
-							fieldInfo->name_index]->toData()] = numLocalFields++;
-		}
+		if ((fieldInfo->access_flags & 0x0008) == 0x0008){
+			_classClass->_staticVars[_classClass->getFieldName(fieldInfo->name_index)] = numStaticFields++;
+		} else _classClass->_instanceVars[_classClass->getFieldName(fieldInfo->name_index)] = numLocalFields++;
 	}
 	return true;
 }

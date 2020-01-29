@@ -7,7 +7,6 @@
 
 #include "ClassClass.hpp"
 #include "Method.hpp"
-#include <string.h>
 
 ClassClass::ClassClass() {
 
@@ -190,14 +189,25 @@ ClassClass::printFlags(u2 flags) {
 
 }
 
+std::string
+ClassClass::getFieldName(u2 constantPoolIndex){
+	ConstantPoolInfo * cpi1 = _constantPoolInfoArray[constantPoolIndex];
+	CONSTANT_NameAndType_info * natinfo = dynamic_cast<CONSTANT_NameAndType_info*>(cpi1);
+	ConstantPoolInfo * cpi2 = _constantPoolInfoArray[natinfo->name_index];
+	CONSTANT_Utf8_info * nameString = dynamic_cast<CONSTANT_Utf8_info*>(cpi2);
+	return std::string((char *) nameString->toData(this));
+}
+
 u8
-ClassClass::getField(string fieldName){
+ClassClass::getField(std::string fieldName){
 	return _staticVariables[_staticVars[fieldName]];
 }
 
 void
-ClassClass::addField(string fieldName, u8 value){
-	if (_staticVariables = nullptr) _staticVariables = malloc(_staticVars.size() * u8);
+ClassClass::addField(std::string fieldName, u8 value){
+	if (_staticVariables == nullptr){
+		_staticVariables = (u8 *) malloc(_staticVars.size() * value);
+	}
 	_staticVariables[_staticVars[fieldName]] = value;
 }
 
@@ -243,7 +253,7 @@ ClassClass::print()
 		printf("  "); printExtendedType(fieldInfo->descriptor_index);
 		printf(" "); printStringDecorated(fieldInfo->name_index);
 		printf(";\n");
-		printf("    descriptor: ");z
+		printf("    descriptor: ");
 		printStringDecorated(fieldInfo->descriptor_index);
 		printf("\n");
 		printf("    flags: (0x%04X)\n",fieldInfo->access_flags);

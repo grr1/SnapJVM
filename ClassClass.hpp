@@ -12,6 +12,9 @@ class Method;
 
 #include "ByteCode.hpp"
 #include "ClassParser.hpp"
+#include <map>
+#include <string>
+#include <string.h>
 
 class ConstantPoolInfo;
 typedef ConstantPoolInfo * ConstantPoolInfoPtr;
@@ -61,13 +64,13 @@ public:
 	u8 * _staticVariables;
 
 	//Map for all static variables
-	map <String, u2> _staticVars;
+	std::map <std::string, u2> _staticVars;
 
 	//Map for all instance variables
-	map <String, u2> _instanceVars;
+	std::map <std::string, u2> _instanceVars;
 
 	//Map for all class methods
-    map <String, Method> _classMethods;
+    std::map <std::string, Method> _classMethods;
 
 public:
 	ClassClass();
@@ -82,8 +85,9 @@ public:
 	void printFlags(u2 flags);
 	int runMain(int argc, char **argv);
 	Method * lookupMethod(const char * methodName);
-	u8 getField(string);
-	void addField(string, u8);
+	u8 getField(std::string);
+	std::string getFieldName(u2);
+	void addField(std::string, u8);
 };
 
 
