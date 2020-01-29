@@ -254,8 +254,23 @@ ByteCodeGen_X86_64::codeGen()
 					// Generate code for every ByteCode
 					codeGenOne(c, codeArray, k);
 
-					k+=ByteCode::_lengths[c];
-					uptr += ByteCode::_lengths[c];
+					int byteCodeLength = ByteCode::_lengths[c];
+					//calculate the length of variable-length ByteCode
+					//similar to Code printing in method print() in ClassClass.cpp
+					if(c == ByteCode::_lookupswitch){
+					  
+					}else if(c == ByteCode::_tableswitch){
+					  int padBytes = 3 - k%4;
+					  //lowbyte starts at k+1+padBytes + 4;
+					  u1 * p = &codeArray[k+padBytes+5];
+					  int lowValue = (int)ClassParser::readU4(p);
+					  //highbyte starts at k+1+padBytes + 8;
+					  p = &codeArray[k+padBytes+9];
+					  int highValue = (int)ClassParser::readU4(p);
+					  byteCodeLength = padBytes + 13 + (highValue - lowValue + 1) * 4;
+					}
+					k += byteCodeLength;
+					uptr += byteCodeLength;
 				}
 
 				// Done by return
@@ -976,7 +991,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
       notImplemented(code);
 
       /**
-       * Code generation below should be correct;
+       * Code generation below has not been fully tested;
        * There might be a problem with parsing iinc
        * as the program will stop parsing the rest if encountering iinc
        *   -- Muyuan 12/6/19
@@ -1188,7 +1203,18 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_tableswitch:{
-          notImplemented(code);
+          int padBytes = 3 - k%4;
+	  //lowbyte starts at k+1+padBytes + 4;
+	  u1 * p = &codeArray[k+padBytes+5];
+	  int lowValue = (int)ClassParser::readU4(p);
+	  //highbyte starts at k+1+padBytes + 8;
+	  p = &codeArray[k+padBytes+9];
+	  int highValue = (int)ClassParser::readU4(p);
+	  
+	  int numRows = highValue - lowValue + 1;
+	  //get top number in stack
+	  //use loop to compare it to every value in the table
+	  //jump to default
         }
         break;
 
