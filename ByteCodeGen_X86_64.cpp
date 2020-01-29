@@ -756,7 +756,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 	  const char * arg2 = this->getReg();
 	  pushVirtualStack();
 	  pushVirtualStack();
-	  
+
 	  *_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 	  *_codeStrStream << "       movq    %" << arg2 << "," << "%" << arg1 << "\n";
         }
@@ -1000,7 +1000,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
        *   -- Muyuan 12/6/19
        */
 
-      
+
       /*
       u1 * p = &codeArray[k+1];
       int localvar = (int)ClassParser::readU1(p);
@@ -1008,7 +1008,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
       if(incvalue > 127) incvalue -= 256; //as incvalue is supposed to be a signed byte
       *_codeStrStream << "       #" << ByteCode::_name[code] << " " << localvar << " " << (int)incvalue <<"\n";
       const char* reg = this->getReg();
-      
+
       *_codeStrStream << "       movq    -"
 		      << 8 * (_stackFrameLocalVars+localvar) << "(%rbp),%" << reg << "\n";
       if(incvalue == 1){
@@ -1021,7 +1021,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
       *_codeStrStream << "       movq    %" << reg << "," << "-"
 							  << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
-      
+
       */
         }
         break;
@@ -1159,7 +1159,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 			u2 arg = ClassParser::readU2(p) + k;
 			*this->_codeStrStream << "       #"
 					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
-      
+
 			//compare the top two numbers in the operand stack
 			popVirtualStack();
 			const char* reg1 = getReg();
@@ -1170,22 +1170,22 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 				popVirtualStack();
 				*this->_codeStrStream << "       cmpq %" << reg1 << ", %" << getReg() <<"\n";
 			}
-      
+
 			*this->_codeStrStream << "       j" << cmpflag << " offset_" << std::dec << arg << "\n";
     }
       break;
 
-      
+
     case ByteCode::_if_acmpeq:{
     	  notImplemented(code);
         }
         break;
-	
+
     case ByteCode::_if_acmpne:{
     	  notImplemented(code);
         }
         break;
-      
+
     case ByteCode::_goto:{
 			u1 * p = &codeArray[k+1];
 			u2 arg = ClassParser::readU2(p) + k;
@@ -1250,13 +1250,27 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_getstatic:{
-          notImplemented(code);
-        }
+		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
+		u1 * p = &codeArray[k+1];
+		u2 index = (u2) ClassParser::readU1() << 8 | (u2) ClassParser::readU1();
+		CONSTANT_Fieldref_info fieldref_info = _classClass->_ConstantPoolInfo[index];
+		CONSTANT_String_info nameStringInfo = _classClass->_constantPoolInfoArray[fieldref_info.name_and_type_index];
+		u8 value = _classClass->getField(nameStringInfo.toData(_classClass));
+		*_codeStrStream << "	   movq	   $" << value << ", %" << getReg() << "\n";
+			pushVirtualStack();
+    }
         break;
-
+	//Does not implement all of the extra type checking mentioned in JVMS since we use only 8B
     case ByteCode::_putstatic:{
-          notImplemented(code);
-        }
+		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
+		u1 * p = &codeArray[k+1];
+		u2 index = (u2) ClassParser::readU1() << 8 | (u2) ClassParser::readU1();
+		CONSTANT_Fieldref_info fieldref_info = _classClass->_ConstantPoolInfo[index];
+		CONSTANT_String_info nameStringInfo = _classClass->_constantPoolInfoArray[fieldref_info.name_and_type_index];
+		u8 value = _classClass->getField(nameStringInfo.toData(_classClass));
+		*_codeStrStream << "	   movq	   $" << value << ", %" << getReg() << "\n";
+		pushVirtualStack();
+	}
         break;
 
     case ByteCode::_getfield:{
