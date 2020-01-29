@@ -10,6 +10,7 @@ fi
 TEST_FOLDER="test"
 TEST_OUT_FOLDER="test_out"
 TEST_SRC_FOLDER="test_src"
+TEST_IGNORE_FOLDER="test_ignore"
 TESTS_PASSED="tests_passed"
 TESTS_FAILED="tests_failed"
 
@@ -17,6 +18,8 @@ TESTS_FAILED="tests_failed"
 echo 0 > ./$TEST_OUT_FOLDER/$TESTS_PASSED
 echo 0 > ./$TEST_OUT_FOLDER/$TESTS_FAILED
 
+# discard previous output
+rm ./$TEST_OUT_FOLDER/*
 echo -e "\033[33m========== TESTALL SNAPJVM =============\033[0m"
 
 # all filenames (without extensions) in the test directory
@@ -32,7 +35,7 @@ for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 
 	# remove ".class" suffix from end of filename
 	test_name=${test_file::-6}
-	echo -e "------ \033[33mRunning $test_name\033[0m ---------"
+	echo -e "------ \033[33mRunning \033[35m$test_name\033[0m ---------"
 
 	# remove old output
 	rm -f ./$TEST_OUT_FOLDER/$test_name.java.out ./$TEST_OUT_FOLDER/$test_name.snap-jvm.out
@@ -47,14 +50,16 @@ for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 
 	# compare output, then make decision based on exit status of `diff`
 	cd ../$TEST_OUT_FOLDER/
+
+	# NOTE: do not add anything between the `diff` and the if-statement, the $? exit code will change
 	diff ./$test_name.java.out ./$test_name.snap-jvm.out
 	if [ $? -eq 0 ] ; then
-		echo -e "\033[33m***** Test \033[35m$test_name \033[32mPASSED\033[0m"
+		echo -e "\033[33m***** Test $test_name \033[32mPASSED\033[0m"
 		passed=`cat ./$TESTS_PASSED`
 		passed=$((passed + 1))
 		echo $passed > ./$TESTS_PASSED
 	else
-		echo -e "\033[33m***** Test \033[35m$test_name \033[31mFAILED\033[0m"
+		echo -e "\033[33m***** Test $test_name \033[31mFAILED\033[0m"
 		failed=`cat ./$TESTS_FAILED`
 		failed=$((failed + 1))
 		echo $failed > ./$TESTS_FAILED
@@ -62,7 +67,9 @@ for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 )
 done
 
+# final statistics
 echo "`cat ./$TEST_OUT_FOLDER/$TESTS_PASSED` tests passed"
 echo "`cat ./$TEST_OUT_FOLDER/$TESTS_FAILED` tests failed"
+echo "`ls ./$TEST_IGNORE_FOLDER/ | wc -w` tests ignored (located in ./$TEST_IGNORE_FOLDER for now)"
 rm ./$TEST_OUT_FOLDER/$TESTS_PASSED
 rm ./$TEST_OUT_FOLDER/$TESTS_FAILED

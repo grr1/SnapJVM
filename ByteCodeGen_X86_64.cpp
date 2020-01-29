@@ -799,7 +799,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_iadd:{
-    		popVirtualStack();
+//			popVirtualStack();
 			const char * arg1 = this->getReg();
 			popVirtualStack();
 			const char * arg2 = this->getReg();
