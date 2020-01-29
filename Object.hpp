@@ -10,7 +10,11 @@
 
 class Object {
 public:
-	Object();
+    ClassClass * _class;
+    void * _localVariables;
+    Object(ClassClass * myClass);
+	getField(string);
+    Object();
 	virtual ~Object();
 };
 

@@ -232,7 +232,7 @@ ClassClass::print()
 		printf("  "); printExtendedType(fieldInfo->descriptor_index);
 		printf(" "); printStringDecorated(fieldInfo->name_index);
 		printf(";\n");
-		printf("    descriptor: ");
+		printf("    descriptor: ");z
 		printStringDecorated(fieldInfo->descriptor_index);
 		printf("\n");
 		printf("    flags: (0x%04X)\n",fieldInfo->access_flags);

@@ -57,6 +57,18 @@ public:
 	int nMethods;
 	Method * _methodsArray;
 
+	//Array with all static variables
+	u8 * _staticVariables;
+
+	//Map for all static variables
+	map <String, u2> _staticVars;
+
+	//Map for all instance variables
+	map <String, u2> _instanceVars;
+
+	//Map for all class methods
+    map <String, Method> _classMethods;
+
 public:
 	ClassClass();
 	virtual ~ClassClass();
