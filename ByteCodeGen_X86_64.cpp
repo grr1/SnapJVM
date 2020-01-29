@@ -1446,7 +1446,7 @@ ByteCodeGen_X86_64::notImplemented(ByteCode::Code code)
 	*this->_codeStrStream << "       # Not implemented. "
 						<< ByteCode::_name[code] << "\n";
 	if (SnapJVMRuntime::isVerboseMode() || SnapJVMRuntime::isTestMode()) {
-		printf("ByteCodeGen_X86_64:Not implemented \"%s\"\n", ByteCode::_name[code]);
+		fprintf(stderr, "ByteCodeGen_X86_64:Not implemented \"%s\"\n", ByteCode::_name[code]);
 	}
 }
 

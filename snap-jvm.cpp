@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 
     SnapJVMRuntime::_theJVMRuntime = new SnapJVMRuntime();
 
-    while ((opt = getopt(argc, argv, "cnv")) != -1) {
+    while ((opt = getopt(argc, argv, "cnvt")) != -1) {
         switch (opt) {
         case 'c':
         	printClassInfo = true;

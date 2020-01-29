@@ -21,6 +21,12 @@ echo -e "\033[33m========== TESTALL SNAPJVM =============\033[0m"
 # all filenames (without extensions) in the test directory
 for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 (
+	# check for ".java" suffix
+	if [[ "${test_file: -5}" == ".java" ]] ; then
+		echo -e "\033[31mERROR: .java files belong in test_src\033[0m"
+		continue
+	fi
+
 	# remove ".class" suffix from end of filename
 	test_name=${test_file::-6}
 	echo -e "------ \033[33mRunning $test_name\033[0m ---------"
@@ -34,7 +40,7 @@ for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 
 	# generate snap-jvm output, printing when an opcode is unimplemented
 	# NOTE: `snap-jvm` expects "filename" instead of "filename.class"
-	../snap-jvm $test_name > ../$TEST_OUT_FOLDER/$test_name.snap-jvm.out
+	../snap-jvm -t $test_name 1> ../$TEST_OUT_FOLDER/$test_name.snap-jvm.out 2> /dev/null
 
 	# compare output, then make decision based on exit status of `diff`
 	cd ../$TEST_OUT_FOLDER/
