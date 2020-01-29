@@ -82,6 +82,8 @@ public:
 	void printFlags(u2 flags);
 	int runMain(int argc, char **argv);
 	Method * lookupMethod(const char * methodName);
+	u8 getField(string);
+	void addField(string, u8);
 };
 
 

@@ -190,6 +190,17 @@ ClassClass::printFlags(u2 flags) {
 
 }
 
+u8
+ClassClass::getField(string fieldName){
+	return _staticVariables[_staticVars[fieldName]];
+}
+
+void
+ClassClass::addField(string fieldName, u8 value){
+	if (_staticVariables = nullptr) _staticVariables = malloc(_staticVars.size() * u8);
+	_staticVariables[_staticVars[fieldName]] = value;
+}
+
 void
 ClassClass::print()
 {

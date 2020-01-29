@@ -24,9 +24,16 @@ Object::Object(ClassClass * ){
     _localVariables = malloc(u8 * numfields);
 }
 
-u8 Object::getField(string fieldName){
+u8
+Object::getField(string fieldName){
     u2 varIndex = _class->_instanceVars[fieldName];
     return _localVariables[varIndex];
+}
+
+void
+Object::addField(string fieldName, u8 value){
+    u2 varIndex = _class->_instanceVars[fieldName];
+    _localVariables[varIndex] = value;
 }
 
 Object::~Object() {

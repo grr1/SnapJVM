@@ -14,6 +14,7 @@ public:
     void * _localVariables;
     Object(ClassClass * myClass);
 	getField(string);
+	addField(string, u8);
     Object();
 	virtual ~Object();
 };
