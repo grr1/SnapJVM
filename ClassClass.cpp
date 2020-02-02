@@ -319,13 +319,14 @@ ClassClass::print()
 					
 					int byteCodeLength = ByteCode::_lengths[c];
 					if(c == ByteCode::_lookupswitch){
-					  
+					  int padBytes = 3 - k%4;
+					  u1 * p = &codeArray[k+padBytes+5];
+					  int nPairs = (int)ClassParser::readU4(p);
+					  byteCodeLength = padBytes + 9 + nPairs * 8;
 					}else if(c == ByteCode::_tableswitch){
 					  int padBytes = 3 - k%4;
-					  //lowbyte starts at k+1+padBytes + 4;
 					  u1 * p = &codeArray[k+padBytes+5];
 					  int lowValue = (int)ClassParser::readU4(p);
-					  //highbyte starts at k+1+padBytes + 8;
 					  p = &codeArray[k+padBytes+9];
 					  int highValue = (int)ClassParser::readU4(p);
 					  byteCodeLength = padBytes + 13 + (highValue - lowValue + 1) * 4;

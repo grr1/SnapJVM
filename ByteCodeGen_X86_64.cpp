@@ -258,7 +258,11 @@ ByteCodeGen_X86_64::codeGen()
 					//calculate the length of variable-length ByteCode
 					//similar to Code printing in method print() in ClassClass.cpp
 					if(c == ByteCode::_lookupswitch){
-					  
+					  int padBytes = 3 - k%4;
+					  //npairs starts at k+1+padBytes + 4;
+					  u1 * p = &codeArray[k+padBytes+5];
+					  int nPairs = (int)ClassParser::readU4(p);
+					  byteCodeLength = padBytes + 9 + nPairs * 8;
 					}else if(c == ByteCode::_tableswitch){
 					  int padBytes = 3 - k%4;
 					  //lowbyte starts at k+1+padBytes + 4;
@@ -1204,8 +1208,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
     case ByteCode::_tableswitch:{
           int padBytes = 3 - k%4;
+	  //default bytes starts at k+1+padBytes
+	  u1 * p = &codeArray[k+padBytes+1];
+	  int defaultOffset = (int)ClassParser::readU4(p);
+	  
 	  //lowbyte starts at k+1+padBytes + 4;
-	  u1 * p = &codeArray[k+padBytes+5];
+	  p = &codeArray[k+padBytes+5];
 	  int lowValue = (int)ClassParser::readU4(p);
 	  //highbyte starts at k+1+padBytes + 8;
 	  p = &codeArray[k+padBytes+9];
@@ -1213,13 +1221,53 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 	  
 	  int numRows = highValue - lowValue + 1;
 	  //get top number in stack
+	  popVirtualStack();
+	  const char* reg = getReg();
 	  //use loop to compare it to every value in the table
+	  *this->_codeStrStream << "       #"
+				<< ByteCode::_name[code] << " ["<< std::dec << lowValue << ", " << highValue <<"]\n";
+	  
+	  for(int i = 0; i < numRows; i++){
+	    //jump offsets starts at k+1+padBytes + 12 + 4*i;
+	    p = &codeArray[k+padBytes+ 13 + 4*i];
+	    int jumpOffset = (int)ClassParser::readU4(p);
+	    int jumpTo = k + jumpOffset;
+	    *this->_codeStrStream << "       cmpq $" << lowValue + i << ", %" << reg <<"\n";
+	    *this->_codeStrStream << "       je offset_" << std::dec << jumpTo << "\n";
+	    
+	  }
 	  //jump to default
+	  *this->_codeStrStream << "       jmp offset_" << std::dec << k + defaultOffset << "\n";
         }
         break;
 
     case ByteCode::_lookupswitch:{
-          notImplemented(code);
+          int padBytes = 3 - k%4;
+	  //npairs starts at k+1+padBytes + 4;
+	  u1 * p = &codeArray[k+padBytes+5];
+	  int nPairs = (int)ClassParser::readU4(p);
+	  p = &codeArray[k+padBytes+1];
+	  int defaultOffset = (int)ClassParser::readU4(p);
+	  //get top number in stack
+	  popVirtualStack();
+	  const char* reg = getReg();
+	  
+	  *this->_codeStrStream << "       #"
+				<< ByteCode::_name[code] << " ("<< std::dec << nPairs <<" pairs)\n";
+
+	  for(int i = 0; i < nPairs; i++){
+	    p = &codeArray[k+padBytes+ 9 + 8*i];
+	    int caseNumber = (int)ClassParser::readU4(p);
+	    p = &codeArray[k+padBytes+ 13 + 8*i];
+	    int jumpOffset = (int)ClassParser::readU4(p);
+	    int jumpTo = k + jumpOffset;
+	    *this->_codeStrStream << "       cmpq $" << caseNumber << ", %" << reg <<"\n";
+	    *this->_codeStrStream << "       je offset_" << std::dec << jumpTo << "\n";
+	    
+	  }
+	  
+	  //jump to default
+	  *this->_codeStrStream << "       jmp offset_" << std::dec << k + defaultOffset << "\n";
         }
         break;
 
