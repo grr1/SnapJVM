@@ -189,26 +189,17 @@ ClassClass::printFlags(u2 flags) {
 
 }
 
-std::string
-ClassClass::getFieldName(u2 constantPoolIndex){
-	ConstantPoolInfo * cpi1 = _constantPoolInfoArray[constantPoolIndex];
-	CONSTANT_NameAndType_info * natinfo = dynamic_cast<CONSTANT_NameAndType_info*>(cpi1);
-	ConstantPoolInfo * cpi2 = _constantPoolInfoArray[natinfo->name_index];
-	CONSTANT_Utf8_info * nameString = dynamic_cast<CONSTANT_Utf8_info*>(cpi2);
-	return std::string((char *) nameString->toData(this));
-}
-
 u8
-ClassClass::getField(std::string fieldName){
-	return _staticVariables[_staticVars[fieldName]];
+ClassClass::getField(u2 fieldCPI){
+	return _staticVariables[_staticVars[fieldCPI]];
 }
 
 void
-ClassClass::addField(std::string fieldName, u8 value){
+ClassClass::addField(u2 fieldCPI, u8 value){
 	if (_staticVariables == nullptr){
 		_staticVariables = (u8 *) malloc(_staticVars.size() * value);
 	}
-	_staticVariables[_staticVars[fieldName]] = value;
+	_staticVariables[_staticVars[fieldCPI]] = value;
 }
 
 void
