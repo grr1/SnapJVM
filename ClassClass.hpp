@@ -141,6 +141,7 @@ public:
 
 class CONSTANT_Fieldref_info : public ConstantPoolInfo {
 public:
+    u2 field_index; //Not specified in the JVM, contains the index of this element in the constant pool
 	u2 class_index;
     u2 name_and_type_index;
     void print(ClassClass * classClass) {

@@ -1274,14 +1274,14 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         }
         break;
 
-    case ByteCode::_invokevirtual:{
-    	    *this->_codeStrStream << "";
-			*this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
-			*this->_codeStrStream << "       mov    $0x" << std::hex
-		  						  << (unsigned long) simplePrintf << ",%rax" << "\n";
-			*this->_codeStrStream << "       call   *%rax\n";
-			//notImplemented(code);
-        }
+        case ByteCode::_invokevirtual:{
+                *this->_codeStrStream << "";
+                *this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
+                *this->_codeStrStream << "       mov    $0x" << std::hex
+                                      << (unsigned long) simplePrintf << ",%rax" << "\n";
+                *this->_codeStrStream << "       call   *%rax\n";
+                //notImplemented(code);
+            }
         break;
 
     case ByteCode::_invokespecial:{

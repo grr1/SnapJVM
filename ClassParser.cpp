@@ -171,6 +171,7 @@ ClassParser::parseConstantPool()
 			/*
 			 * CONSTANT_Fieldref_info {
 				u1 tag;
+			    u2 fieldIndex;
 				u2 class_index;
 				u2 name_and_type_index;
 			}
@@ -180,6 +181,7 @@ ClassParser::parseConstantPool()
 				cpInfo = c;
 				c->class_index = readU2();
 				c->name_and_type_index = readU2();
+				fieldCPIs.push_back(indexID);
 				break;
 			}
 
@@ -413,7 +415,8 @@ ClassParser::parseFields()
 		}
 	*/
 
-
+    u2 numLocalFields = 0;
+    u2 numStaticFields = 0;
 	_classClass->_fields_count = readU2();
 	_classClass->_fieldsArray = new FieldInfoPtr[_classClass->_fields_count];
 	for (int i = 0; i < _classClass->_fields_count; i++) {
@@ -436,9 +439,11 @@ ClassParser::parseFields()
 		}
 		//Add Field to the appropriate map
 		if ((fieldInfo->access_flags & 0x0008) == 0x0008){
-			_classClass->_staticVars[fieldInfo->name_index] = numStaticFields++;
-		} else _classClass->_instanceVars[fieldInfo->name_index] = numLocalFields++;
+			_classClass->_staticVars[fieldCPIs.front()] = numStaticFields++;
+		} else _classClass->_instanceVars[fieldCPIs.front()] = numLocalFields++;
+		fieldCPIs.pop_front();
 	}
+	_classClass->_staticVariables = (u8 *) malloc(sizeof(u8) * numStaticFields);
 	return true;
 }
 

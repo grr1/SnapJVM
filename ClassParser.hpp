@@ -10,7 +10,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
-
+#include <list>
 #include "ByteCode.hpp"
 
 class ClassClass;
@@ -36,6 +36,7 @@ private:
 
 	static bool isLittleEndian();
 
+	std::list<u2> fieldCPIs;
 public:
 	ClassParser();
 	ClassClass * parse(const char * classFileName);
