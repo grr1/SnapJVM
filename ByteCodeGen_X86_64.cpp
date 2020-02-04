@@ -304,8 +304,9 @@ simplePrintf(const char * s) {
 	printf("%s\n",s);
 }
 
-void simplePrintfD(const double d){
-    printf("%lf\n",d);
+void simplePrintfD(double *d){
+  printf("d=%p\n", (void*)d);
+   //printf("%lf\n",d);
 }
 
 void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) {
@@ -429,8 +430,11 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
                 printf("arg=%d\n",arg);
             }
             ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            CONSTANT_Double_info *dinfo = (CONSTANT_Double_info*) info;
+            
             if (info != NULL){
-                *this->_codeStrStream << "       movq   $0x" << std::hex << (unsigned long) info->toData(_classClass) << ", %"<< this->getReg() << "\n";
+                u8 *doubleAsLong = (u8*) &(dinfo->value);
+                *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", " << this->getReg() << "\n";
             }
             pushVirtualStack();
         }
