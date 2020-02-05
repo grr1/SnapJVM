@@ -1102,7 +1102,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_l2d:{
-n         notImplemented(code);
+          notImplemented(code);
         }
         break;
 
@@ -1271,13 +1271,8 @@ n         notImplemented(code);
     case ByteCode::_freturn:
     case ByteCode::_dreturn:
     case ByteCode::_areturn:{
-        const char* reg1 = getReg();
-        //popVirtualStack();
-
-        //*_codeStrStream << "       movq    %" << reg1 << "," << "%rax" << "\n";
-
-        //*_codeStrStream << "       movq    %"reg1", -" << 8 * (_stackFrameLocalVars) << "(%rbp)" << "\n";
-
+        *_codeStrStream << "       movq    %" << getReg() << ", " << "%rax" << "\n";        
+        popVirtualStack();
         }
     case ByteCode::_return:{
     	restoreRegsBeforeReturn();
@@ -1309,11 +1304,13 @@ n         notImplemented(code);
         break;
 
     case ByteCode::_invokevirtual:{
-    	    *this->_codeStrStream << "";
-			*this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
-			*this->_codeStrStream << "       mov    $0x" << std::hex
+    	    *_codeStrStream << "";
+			*_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
+			*_codeStrStream << "       mov    $0x" << std::hex
 		  						  << (unsigned long) simplePrintf << ",%rax" << "\n";
-			*this->_codeStrStream << "       call   *%rax\n";
+			*_codeStrStream << "       call   *%rax\n";
+            *_codeStrStream << "       movq   %rax" << ", " << "%" << getReg();
+            pushVirtualStack();
 			//notImplemented(code);
         }
         break;
