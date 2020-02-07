@@ -285,7 +285,7 @@ void ByteCode::initialize() {
 	def(_lor                 , "lor"                 , "b"    , NULL    , T_LONG   , -2, false);
 	def(_ixor                , "ixor"                , "b"    , NULL    , T_INT    , -1, false);
 	def(_lxor                , "lxor"                , "b"    , NULL    , T_LONG   , -2, false);
-	def(_iinc                , "iinc"                , "bic"  , "wbiicc", T_VOID   ,  0, false);
+	def(_iinc                , "iinc"                , "bic"  , "wbiicc", T_VOID   ,  0, false); // TODO error in wide_format field here ("wbiicc"), or how it is handled - acts like iinc has 99 ('c' as decimal) arguments, makes program SEGFAULT because it jumps out of a loop prematurely
 	def(_i2l                 , "i2l"                 , "b"    , NULL    , T_LONG   ,  1, false);
 	def(_i2f                 , "i2f"                 , "b"    , NULL    , T_FLOAT  ,  0, false);
 	def(_i2d                 , "i2d"                 , "b"    , NULL    , T_DOUBLE ,  1, false);
