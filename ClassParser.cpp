@@ -439,11 +439,10 @@ ClassParser::parseFields()
 		}
 		//Add Field to the appropriate map
 		if ((fieldInfo->access_flags & 0x0008) == 0x0008){
-			_classClass->_staticVars[fieldCPIs.front()] = numStaticFields++;
-		} else _classClass->_instanceVars[fieldCPIs.front()] = numLocalFields++;
+			_classClass->_staticVars[fieldCPIs.front()] = (u8 *) malloc(sizeof(u8));
+		} else _classClass->_instanceVars[fieldCPIs.front()] = (u8*) malloc(sizeof(u8));
 		fieldCPIs.pop_front();
 	}
-	_classClass->_staticVariables = (u8 *) malloc(sizeof(u8) * numStaticFields);
 	return true;
 }
 

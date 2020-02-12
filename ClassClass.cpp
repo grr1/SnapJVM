@@ -18,7 +18,7 @@ ClassClass::~ClassClass() {
 }
 
 int
-ClassClass::runMain(int argc, char **argv) {\
+ClassClass::runMain(int argc, char **argv) {
 	Method * method = lookupMethod("main");
 	if (method ==NULL) {
 		fprintf(stderr, "Class does not have \"main\" method");
@@ -191,15 +191,12 @@ ClassClass::printFlags(u2 flags) {
 
 u8
 ClassClass::getField(u2 fieldCPI){
-	return _staticVariables[_staticVars[fieldCPI]];
+	return *_staticVars[fieldCPI];
 }
 
 void
 ClassClass::addField(u2 fieldCPI, u8 value){
-	if (_staticVariables == nullptr){
-		_staticVariables = (u8 *) malloc(_staticVars.size() * value);
-	}
-	_staticVariables[_staticVars[fieldCPI]] = value;
+	*_staticVars[fieldCPI] = value;
 }
 
 void

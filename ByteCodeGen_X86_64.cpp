@@ -1250,17 +1250,34 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_getstatic:{
-		*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 		u1 * p = &codeArray[k+1];
+		//Get Index into the constant pool
 		u2 index = (u2) ClassParser::readU1(p) << 8 | (u2) ClassParser::readU1(p);
-		u8 value = _classClass->getField(index);
-		*_codeStrStream << "	   movq	   $" << value << ", %" << getReg() << "\n";
-			pushVirtualStack();
+		//Get the the pointer mapped to the above index
+        *_codeStrStream << "       #" << ByteCode::_name[code] << " #" << index << "\n";
+		u8* valuePtr = _classClass->_staticVars[index];
+		//Move that value into the register
+		// u8 value = *valuePtr;
+		*_codeStrStream << "	   movq	   $" << valuePtr << ", %" << getReg() << "\n"; //moved in
+        *_codeStrStream << "       movq    (%" << getReg() << "), %" << getReg() << "\n";
+
+        pushVirtualStack();
     }
-        break;
-	//Does not implement all of the extra type checking mentioned in JVMS since we use only 8B
-    case ByteCode::_putstatic:{
-		notImplemented(code);
+            break;
+            //Does not implement all of the extra type checking mentioned in JVMS since we use only 8B
+        case ByteCode::_putstatic:{
+        u1 * p = &codeArray[k+1];
+        //Get Index into the constant pool
+        u2 index = (u2) ClassParser::readU1(p) << 8 | (u2) ClassParser::readU1(p);
+        *_codeStrStream << "       #" << ByteCode::_name[code] << " #" << index << "\n";
+        //Get the address that value is mapped to
+        u8 * value = (_classClass->_staticVars[index]);
+        //Move that value into the register reg = 0xDEADBEEF
+        //Then set the value of the register to that dereferenced address. reg = *reg
+        popVirtualStack();
+        *_codeStrStream << "	    movq	%" << getReg() << ", ("<< value << ")\n";
+
+        pushVirtualStack();
 	}
         break;
 

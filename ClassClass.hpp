@@ -59,14 +59,11 @@ public:
 	int nMethods;
 	Method * _methodsArray;
 
-	//Array with all static variables
-	u8 * _staticVariables;
-
 	//Map for all static variables
-	std::map <u2, u2> _staticVars;
+	std::map <u2, u8*> _staticVars;
 
 	//Map for all instance variables
-	std::map <u2, u2> _instanceVars;
+	std::map <u2, u8*> _instanceVars;
 
 	//Map for all class methods
     std::map <u2, Method> _classMethods;
