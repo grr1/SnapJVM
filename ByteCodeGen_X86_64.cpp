@@ -254,7 +254,7 @@ ByteCodeGen_X86_64::codeGen()
 					// Generate code for every ByteCode
 					codeGenOne(c, codeArray, k);
 
-					k+=ByteCode::_lengths[c];
+					k += ByteCode::_lengths[c] & 0xF;
 					uptr += ByteCode::_lengths[c];
 				}
 

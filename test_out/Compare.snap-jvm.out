@@ -1,2 +1,74 @@
+
+main:
+       #max_stack=2       max_locals=3
+
+       # Save frame pointer
+       pushq   %rbp
+       movq    %rsp, %rbp
+
+       # Allocate space for locals and stack
+       subq    $128,%rsp
+       # Save arguments
+       mov   rdi,-0(%rbp)
+       mov   rsi,-8(%rbp)
+       mov   rdx,-16(%rbp)
+       mov   rcx,-24(%rbp)
+       mov   r8,-32(%rbp)
+       mov   r9,-40(%rbp)
+
+
+       #Save callee saved registers
+       mov   rbx,-48(%rbp)
+       mov   r12,-56(%rbp)
+       mov   r13,-64(%rbp)
+       mov   r14,-72(%rbp)
+       mov   r15,-80(%rbp)
+
+offset_0:
+       #iconst_3
+       movq $3, %rbx
+offset_1:
+       #istore_1
+       movq    %r12,-96(%rbp)
+
+
+main:
+       #max_stack=2       max_locals=3
+
+       # Save frame pointer
+       pushq   %rbp
+       movq    %rsp, %rbp
+
+       # Allocate space for locals and stack
+       subq    $128,%rsp
+       # Save arguments
+       mov   rdi,-0(%rbp)
+       mov   rsi,-8(%rbp)
+       mov   rdx,-16(%rbp)
+       mov   rcx,-24(%rbp)
+       mov   r8,-32(%rbp)
+       mov   r9,-40(%rbp)
+
+
+       #Save callee saved registers
+       mov   rbx,-48(%rbp)
+       mov   r12,-56(%rbp)
+       mov   r13,-64(%rbp)
+       mov   r14,-72(%rbp)
+       mov   r15,-80(%rbp)
+
+offset_0:
+       #iconst_3
+       movq $3, %rbx
+offset_1:
+       #istore_1
+       movq    %r12,-96(%rbp)
+offset_2:
+       #bipush 7
+       movq $7, %rbx
+offset_4:
+       #istore_2
+       movq    %r12,-104(%rbp)
+
 i > 0
 i == j
