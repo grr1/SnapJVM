@@ -387,7 +387,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
     case ByteCode::_bipush:{
 			u1 * p = &codeArray[k+1];
-			u1 arg = ClassParser::readU1(p);
+			signed char arg = (signed char)ClassParser::readU1(p);
 			*_codeStrStream << "       #"
 					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
 			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
@@ -397,7 +397,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
     case ByteCode::_sipush:{
 			u1 * p = &codeArray[k+1];
-			u2 arg = ClassParser::readU2(p);
+			short arg = (short)ClassParser::readU2(p);
 			*_codeStrStream << "       #"
 					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
 			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
@@ -429,24 +429,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_ldc2_w:{
-            u1 * p1 = &codeArray[k+1];
-            u1 arg1 = ClassParser::readU1(p1);
-            u1 * p2 = &codeArray[k+2];
-            u1 arg2 = ClassParser::readU1(p2);
-            int arg = ((int)arg1) << 8;
-            arg = arg | ((int)arg2);
-            *this->_codeStrStream << "       #" << ByteCode::_name[code] << " #" << arg << "\n";
-            if (SnapJVMRuntime::isVerboseMode()){
-                printf("arg=%d\n",arg);
-            }
-            ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
-            CONSTANT_Double_info *dinfo = (CONSTANT_Double_info*) info;
-            
-            if (info != NULL){
-                u8 *doubleAsLong = (u8*) &(dinfo->value);
-                *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", " << this->getReg() << "\n";
-            }
-            pushVirtualStack();
+          notImplemented(code);
         }
         break;
 

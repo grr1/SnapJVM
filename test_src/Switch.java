@@ -17,6 +17,34 @@ class Switch{
 	default:
 	    System.out.println("Invalid");
 	}
+
+	//we cannot push a negative number yet
+	
+	int negative = -6;
+	switch(negative){
+	case -7:
+	    System.out.println("-7");
+	    break;
+	case -6:
+	    System.out.println("-6");
+	    break;
+	case -4:
+	    System.out.println("-4");
+	    break;
+	case -3:
+	case -2:
+	case -1:
+	    System.out.println("-1<=x<=-3");
+	    break;
+	case 0:
+	    System.out.println("0");
+	    break;
+	case 1:
+	    System.out.println("1");
+	    break;
+        default:
+	    System.out.println("not in range of [-7, 1]");
+	}
 	
 	
 	//lookupswitch
