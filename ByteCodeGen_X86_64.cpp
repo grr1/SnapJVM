@@ -1255,13 +1255,31 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 		u2 index = (u2) ClassParser::readU1(p) << 8 | (u2) ClassParser::readU1(p);
 		//Get the the pointer mapped to the above index
         *_codeStrStream << "       #" << ByteCode::_name[code] << " #" << index << "\n";
-		u8* valuePtr = _classClass->_staticVars[index];
-		//Move that value into the register
-		// u8 value = *valuePtr;
-		*_codeStrStream << "	   movq	   $" << valuePtr << ", %" << getReg() << "\n"; //moved in
-        *_codeStrStream << "       movq    (%" << getReg() << "), %" << getReg() << "\n";
 
-        pushVirtualStack();
+        //Temporary code as a short fix to ensure we don't load a class we don't have
+        CONSTANT_Fieldref_info * staticFieldInfo = (CONSTANT_Fieldref_info *) _classClass->_constantPoolInfoArray[index];
+        CONSTANT_NameAndType_info * staticFieldNaT = (CONSTANT_NameAndType_info *) _classClass->_constantPoolInfoArray[staticFieldInfo->name_and_type_index];
+        CONSTANT_Utf8_info * staticFieldName = (CONSTANT_Utf8_info *) _classClass->_constantPoolInfoArray[staticFieldNaT->name_index];
+        if (strcmp((char *)staticFieldName->bytesArray, "out") == 0){
+            notImplemented(code);
+            fprintf(stderr, "Detected calling getstatic on library class, got: %s\n", staticFieldName->bytesArray);
+        }
+        //if (strcmpstaticFieldName.bytesArray)
+
+
+		else {
+            u8 *valuePtr = _classClass->_staticVars[index];
+            //Move that value into the register
+            // u8 value = *valuePtr;
+            *_codeStrStream << "	   movq	   $" << valuePtr << ", %" << getReg() << "\n"; //moved in
+            *_codeStrStream << "       movq    (%" << getReg() << "), %" << getReg() << "\n";
+            char formatString[5] = "%d\n";
+            *_codeStrStream << "       movq    " << &formatString << ", %rax\n";
+            *_codeStrStream << "       movq    " << getReg() << ", %rbx\n";
+            *_codeStrStream << "       bl printf";
+
+            pushVirtualStack();
+        }
     }
             break;
             //Does not implement all of the extra type checking mentioned in JVMS since we use only 8B
