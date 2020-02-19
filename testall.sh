@@ -22,6 +22,16 @@ echo 0 > ./$TEST_OUT_FOLDER/$TESTS_FAILED
 rm ./$TEST_OUT_FOLDER/*
 echo -e "\033[33m========== TESTALL SNAPJVM =============\033[0m"
 
+for test_file in $(ls ./$TEST_SRC_FOLDER/${1%.*}) ; do
+(
+    if [[ "${test_file: -5}" == ".java" ]] ; then
+		echo -e "\033[33m***** Compiling ${test_file::-5}\033[0m"
+	        javac -d ./$TEST_FOLDER ./$TEST_SRC_FOLDER/${test_file}
+		continue
+	fi
+)
+done
+
 # all filenames (without extensions) in the test directory
 for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
 (

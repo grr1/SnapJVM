@@ -368,7 +368,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
     case ByteCode::_bipush:{
 			u1 * p = &codeArray[k+1];
-			u1 arg = ClassParser::readU1(p);
+			signed char arg = (signed char)ClassParser::readU1(p);
 			*_codeStrStream << "       #"
 					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
 			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
@@ -378,7 +378,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
     case ByteCode::_sipush:{
 			u1 * p = &codeArray[k+1];
-			u2 arg = ClassParser::readU2(p);
+			short arg = (short)ClassParser::readU2(p);
 			*_codeStrStream << "       #"
 					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
 			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
@@ -405,7 +405,24 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_ldc_w:{
-          notImplemented(code);
+            u1 * p1 = &codeArray[k+1];
+            u1 arg1 = ClassParser::readU1(p1);
+            u1 * p2 = &codeArray[k+2];
+            u1 arg2 = ClassParser::readU1(p2);
+            int arg = ((int)arg1) << 8;
+            arg = arg | ((int)arg2);
+            *this->_codeStrStream << "       #" << ByteCode::_name[code] << " #" << arg << "\n";
+            if (SnapJVMRuntime::isVerboseMode()){
+                printf("arg=%d\n",arg);
+            }
+            ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            CONSTANT_Double_info *dinfo = (CONSTANT_Double_info*) info;
+
+            if (info != NULL){
+                u8 *doubleAsLong = (u8*) &(dinfo->value);
+                *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", " << this->getReg() << "\n";
+            }
+            pushVirtualStack();
         }
         break;
 
@@ -1055,7 +1072,7 @@ pushVirtualStack();
 //      notImplemented(code);
 
       /**
-       * Code generation below should be correct;
+       * Code generation below has not been fully tested;
        * There might be a problem with parsing iinc
        * as the program will stop parsing the rest if encountering iinc
        *   -- Muyuan 12/6/19
@@ -1270,12 +1287,67 @@ pushVirtualStack();
         break;
 
     case ByteCode::_tableswitch:{
-          notImplemented(code);
+          int padBytes = 3 - k%4;
+	  //default bytes starts at k+1+padBytes
+	  u1 * p = &codeArray[k+padBytes+1];
+	  int defaultOffset = (int)ClassParser::readU4(p);
+	  
+	  //lowbyte starts at k+1+padBytes + 4;
+	  p = &codeArray[k+padBytes+5];
+	  int lowValue = (int)ClassParser::readU4(p);
+	  //highbyte starts at k+1+padBytes + 8;
+	  p = &codeArray[k+padBytes+9];
+	  int highValue = (int)ClassParser::readU4(p);
+	  
+	  int numRows = highValue - lowValue + 1;
+	  //get top number in stack
+	  popVirtualStack();
+	  const char* reg = getReg();
+	  //use loop to compare it to every value in the table
+	  *this->_codeStrStream << "       #"
+				<< ByteCode::_name[code] << " ["<< std::dec << lowValue << ", " << highValue <<"]\n";
+	  
+	  for(int i = 0; i < numRows; i++){
+	    //jump offsets starts at k+1+padBytes + 12 + 4*i;
+	    p = &codeArray[k+padBytes+ 13 + 4*i];
+	    int jumpOffset = (int)ClassParser::readU4(p);
+	    int jumpTo = k + jumpOffset;
+	    *this->_codeStrStream << "       cmpq $" << lowValue + i << ", %" << reg <<"\n";
+	    *this->_codeStrStream << "       je offset_" << std::dec << jumpTo << "\n";
+	    
+	  }
+	  //jump to default
+	  *this->_codeStrStream << "       jmp offset_" << std::dec << k + defaultOffset << "\n";
         }
         break;
 
     case ByteCode::_lookupswitch:{
-          notImplemented(code);
+          int padBytes = 3 - k%4;
+	  //npairs starts at k+1+padBytes + 4;
+	  u1 * p = &codeArray[k+padBytes+5];
+	  int nPairs = (int)ClassParser::readU4(p);
+	  p = &codeArray[k+padBytes+1];
+	  int defaultOffset = (int)ClassParser::readU4(p);
+	  //get top number in stack
+	  popVirtualStack();
+	  const char* reg = getReg();
+	  
+	  *this->_codeStrStream << "       #"
+				<< ByteCode::_name[code] << " ("<< std::dec << nPairs <<" pairs)\n";
+
+	  for(int i = 0; i < nPairs; i++){
+	    p = &codeArray[k+padBytes+ 9 + 8*i];
+	    int caseNumber = (int)ClassParser::readU4(p);
+	    p = &codeArray[k+padBytes+ 13 + 8*i];
+	    int jumpOffset = (int)ClassParser::readU4(p);
+	    int jumpTo = k + jumpOffset;
+	    *this->_codeStrStream << "       cmpq $" << caseNumber << ", %" << reg <<"\n";
+	    *this->_codeStrStream << "       je offset_" << std::dec << jumpTo << "\n";
+	    
+	  }
+	  
+	  //jump to default
+	  *this->_codeStrStream << "       jmp offset_" << std::dec << k + defaultOffset << "\n";
         }
         break;
 
