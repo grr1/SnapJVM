@@ -633,13 +633,11 @@ pushVirtualStack();
     case ByteCode::_istore_2:
     case ByteCode::_istore_3:
 		{
-//			popVirtualStack();
 			int localvar = code - ByteCode::_istore_0;
 			*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 			*_codeStrStream << "       movq    %" << this->getReg() << "," << "-"
 							  << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
-popVirtualStack(); // TODO do not need variable anymore?
-printf("%s\n", this->_codeStrStream->str().c_str());
+			popVirtualStack();
 		}
 		break;
 
@@ -892,7 +890,7 @@ pushVirtualStack();
         }
         break;
 
-    case ByteCode::_imul:{ // TODO is this picky like idivq
+    case ByteCode::_imul:{
 		popVirtualStack();
 		const char* arg1 = this->getReg();
 		popVirtualStack();
@@ -918,7 +916,7 @@ pushVirtualStack();
         }
         break;
 
-    case ByteCode::_idiv:{ // TODO
+    case ByteCode::_idiv:{
           notImplemented(code);
         }
         break;
@@ -938,7 +936,7 @@ pushVirtualStack();
         }
         break;
 
-    case ByteCode::_irem:{ // TODO (similar to idivq)
+    case ByteCode::_irem:{
           notImplemented(code);
         }
         break;
@@ -1105,7 +1103,6 @@ pushVirtualStack();
         break;
 
 
-// TODO TODO are the below necessary if everything is promoted to 'long'
     case ByteCode::_i2l:{
           notImplemented(code);
         }
@@ -1180,7 +1177,6 @@ pushVirtualStack();
           notImplemented(code);
         }
         break;
-// TODO TODO are the below necessary if everything is promoted to 'long'
 
     case ByteCode::_lcmp:{
           notImplemented(code);
