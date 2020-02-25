@@ -304,10 +304,29 @@ simplePrintf(const char * s) {
 	printf("%s\n",s);
 }
 
-void simplePrintfD(double d){
-  //printf("d=%p\n", (void*)d);
-  printf("%lf\n",d);
+
+void *ReverseEndian(void *p, size_t size) 
+{
+    char *head = (char *)p; // here
+    char *tail = head + size - 1;
+
+    for (; tail > head; --tail, ++head) {
+        char temp = *head;
+        *head = *tail;
+        *tail = temp;
+    }
+    return p;
 }
+
+void simplePrintfD(u8 d){
+  
+  //void* l = ReverseEndian(d,sizeof(d));
+  
+  //printf("d=%p\n", l);
+  printf("%lf\n",(double)d);
+}
+
+
 
 void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) {
 	switch(code) {
@@ -434,7 +453,8 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
             
             if (info != NULL){
                 u8 *doubleAsLong = (u8*) &(dinfo->value);
-                *this->_codeStrStream << "       movq   $" << dinfo->value << ", %rdi" << "\n";
+                //*this->_codeStrStream << "       movq   $" << dinfo->value << ", %rdi" << "\n";
+                *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", %rdi" << "\n";
             }
             pushVirtualStack();
         }
