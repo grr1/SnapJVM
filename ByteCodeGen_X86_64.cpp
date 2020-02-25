@@ -304,9 +304,9 @@ simplePrintf(const char * s) {
 	printf("%s\n",s);
 }
 
-void simplePrintfD(double *d){
-  printf("d=%p\n", (void*)d);
-   //printf("%lf\n",d);
+void simplePrintfD(double d){
+  //printf("d=%p\n", (void*)d);
+  printf("%lf\n",d);
 }
 
 void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) {
@@ -434,7 +434,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
             
             if (info != NULL){
                 u8 *doubleAsLong = (u8*) &(dinfo->value);
-                *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", " << this->getReg() << "\n";
+                *this->_codeStrStream << "       movq   $" << dinfo->value << ", %rdi" << "\n";
             }
             pushVirtualStack();
         }
