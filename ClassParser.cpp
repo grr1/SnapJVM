@@ -468,7 +468,7 @@ ClassParser::parseFields()
             dprintf(2, "Malloced at address %p, stored at _instanceVars[%d]\n", _classClass->_instanceVars[fieldCPIs.front()], fieldCPIs.front());
         }
             dprintf(2, "%d\n", fieldCPIs.front());
-        fieldCPIs.pop_front();
+        if (fieldCPIs.size() > 0) fieldCPIs.pop_front();
 	}
 	return true;
 }
