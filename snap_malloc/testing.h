@@ -2,11 +2,9 @@
 #define TESTING_H
 
 #include "myMalloc.hpp"
-#include "printing.h"
 
-class mallocTester : private mallocHeap {
-	mallocHeap* mHeap;
-	mallocPrinter* mPrinter;
+class mallocTester : private MallocHeap {
+	MallocHeap* mHeap;
 
 	void initialize_test(const char* name);
 	void finalize_test();

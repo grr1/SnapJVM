@@ -18,7 +18,7 @@ static bool use_color;
  *
  * @param block The block to print
  */
-void mallocPrinter::basic_print(mallocHeap* mHeap, header * block) {
+void mallocPrinter::basic_print(MallocHeap* mHeap, Header * block) {
 	printf("[%zd] -> ", mHeap->get_block_size(block));
 }
 
@@ -27,7 +27,7 @@ void mallocPrinter::basic_print(mallocHeap* mHeap, header * block) {
  *
  * @param block The block to print
  */
-void mallocPrinter::print_list(mallocHeap* mHeap, header * block) {
+void mallocPrinter::print_list(MallocHeap* mHeap, Header * block) {
 	printf("[%zd]\n", mHeap->get_block_size(block));
 }
 
@@ -65,7 +65,7 @@ bool mallocPrinter::check_color() {
  *
  * @param block The block to print the allocation status of
  */
-void mallocPrinter::print_color(mallocHeap* mHeap, header * block) {
+void mallocPrinter::print_color(MallocHeap* mHeap, Header * block) {
   if (!check_color()) {
     return;
   }
@@ -89,7 +89,7 @@ void mallocPrinter::clear_color() {
   }
 }
 
-inline bool mallocPrinter::is_sentinel(mallocHeap* mHeap, void * p) {
+inline bool mallocPrinter::is_sentinel(MallocHeap* mHeap, void * p) {
   for (int i = 0; i < N_LISTS; i++) {
     if (&(mHeap->freelistSentinels[i]) == p) {
       return true;
@@ -106,7 +106,7 @@ inline bool mallocPrinter::is_sentinel(mallocHeap* mHeap, void * p) {
  *
  * @param p The pointer to print
  */
-void mallocPrinter::print_pointer(mallocHeap* mHeap, void * p) {
+void mallocPrinter::print_pointer(MallocHeap* mHeap, void * p) {
   if (is_sentinel(mHeap, p)) {
     printf("SENTINEL");
   } else {
@@ -123,7 +123,7 @@ void mallocPrinter::print_pointer(mallocHeap* mHeap, void * p) {
  *
  * @param block The block to print
  */
-void mallocPrinter::print_object(mallocHeap* mHeap, header * block) {
+void mallocPrinter::print_object(MallocHeap* mHeap, Header * block) {
   print_color(mHeap, block);
 
   printf("[\n");
@@ -152,7 +152,7 @@ void mallocPrinter::print_object(mallocHeap* mHeap, header * block) {
  *
  * @param block The block to print
  */
-void mallocPrinter::print_status(mallocHeap* mHeap, header * block) {
+void mallocPrinter::print_status(MallocHeap* mHeap, Header * block) {
   print_color(mHeap, block);
   switch(mHeap->get_block_state(block)) {
     case UNALLOCATED:
@@ -192,8 +192,8 @@ static void print_bitmap() {
  * @param start Node to start printing at
  * @param end Node to stop printing at
  */
-void mallocPrinter::print_sublist(printFormatter pf, header * start, header * end) {
-  for (header * cur = start; cur != end; cur = cur->next) {
+void mallocPrinter::print_sublist(printFormatter pf, Header * start, Header * end) {
+  for (Header * cur = start; cur != end; cur = cur->next) {
     pf(cur);
   }
 }
@@ -201,7 +201,7 @@ void mallocPrinter::print_sublist(printFormatter pf, header * start, header * en
 /**
  * @brief print the full freelist
  *
- * @param pf Function to perform the header printing
+ * @param pf Function to perform the Header printing
  */
 void mallocPrinter::freelist_print(printFormatter pf) {
   if (!pf) {
@@ -209,7 +209,7 @@ void mallocPrinter::freelist_print(printFormatter pf) {
   }
 
   for (size_t i = 0; i < N_LISTS; i++) {
-    header * freelist = &freelistSentinels[i];
+    Header * freelist = &freelistSentinels[i];
     if (freelist->next != freelist) {
       printf("L%zu: ", i);
       print_sublist(pf, freelist->next, freelist);
@@ -222,7 +222,7 @@ void mallocPrinter::freelist_print(printFormatter pf) {
 /**
  * @brief print the boundary tags from each chunk from the OS
  *
- * @param pf Function to perform the header printing
+ * @param pf Function to perform the Header printing
  */
 void mallocPrinter::tags_print(printFormatter pf) {
   if (!pf) {
@@ -230,11 +230,11 @@ void mallocPrinter::tags_print(printFormatter pf) {
   }
 
   for (size_t i = 0; i < numOsChunks; i++) {
-    header * chunk = osChunkList[i];
+    Header * chunk = osChunkList[i];
     pf(chunk);
-    for (chunk = get_right_header(chunk);
+    for (chunk = get_right_Header(chunk);
          get_block_state(chunk) != FENCEPOST;
-         chunk = get_right_header(chunk)) {
+         chunk = get_right_Header(chunk)) {
         pf(chunk);
     }
     pf(chunk);

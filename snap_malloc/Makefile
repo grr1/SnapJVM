@@ -14,6 +14,6 @@ test: tests
 	python ./runtest.py
 
 .PHONY: clean
-clean: 
+clean:
 	$(MAKE) -C tests clean
 	$(MAKE) -C examples clean
