@@ -304,6 +304,14 @@ simplePrintf(const char * s) {
 	printf("%s\n",s);
 }
 
+void simplePrintfD(double *d){
+  
+  //void* l = ReverseEndian(d,sizeof(d));
+  
+  printf("d=%p\n", d);
+  printf("d=%lf\n", *d);
+}
+bool doubletest = false;
 void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) {
 	switch(code) {
 	case ByteCode::_nop:{
@@ -427,7 +435,26 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_ldc2_w:{
-          notImplemented(code);
+            doubletest = true;
+            u1 * p1 = &codeArray[k+1];
+            u1 arg1 = ClassParser::readU1(p1);
+            u1 * p2 = &codeArray[k+2];
+            u1 arg2 = ClassParser::readU1(p2);
+            int arg = ((int)arg1) << 8;
+            arg = arg | ((int)arg2);
+            *this->_codeStrStream << "       #" << ByteCode::_name[code] << " #" << arg << "\n";
+            if (SnapJVMRuntime::isVerboseMode()){
+                printf("arg=%d\n",arg);
+            }
+            ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            CONSTANT_Double_info *dinfo = (CONSTANT_Double_info*) info;
+            
+            if (info != NULL){
+                u8 *doubleAsLong = (u8*) &(dinfo->value);
+                *this->_codeStrStream << "       movq   $" << doubleAsLong << ", %rdi" << "\n";
+                //*this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", %rdi" << "\n";
+            }
+            pushVirtualStack();
         }
         break;
 
@@ -1395,9 +1422,16 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_invokevirtual:{
     	    *this->_codeStrStream << "";
 			*this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
+            if (doubletest){
+                *this->_codeStrStream << "      #double test\n";
+                *this->_codeStrStream << "       mov    $0x" << std::hex
+		  						  << (unsigned long) simplePrintfD << ",%rax" << "\n";
+            } else {
 			*this->_codeStrStream << "       mov    $0x" << std::hex
 		  						  << (unsigned long) simplePrintf << ",%rax" << "\n";
+            }
 			*this->_codeStrStream << "       call   *%rax\n";
+            doubletest = false;
 			//notImplemented(code);
         }
         break;
