@@ -1,0 +1,199 @@
+#ifndef MY_MALLOC_H
+#define MY_MALLOC_H
+
+#include <stdbool.h>
+#include <sys/types.h>
+
+#define RELATIVE_POINTERS true
+
+#ifndef ARENA_SIZE
+// If not specified at compile time use the default arena size
+#define ARENA_SIZE 4096
+#endif
+
+#ifndef N_LISTS
+// If not specified at compile time use the default number of free lists
+#define N_LISTS 59
+#endif
+
+/* Size of the header for an allocated block
+ *
+ * The size of the normal minus the size of the two free list pointers as
+ * they are only maintained while block is free
+ */
+#define ALLOC_HEADER_SIZE (sizeof(header) - (2 * sizeof(header *)))
+
+/* The minimum size request the allocator will service */
+#define MIN_ALLOCATION 8
+
+#define MAX_OS_CHUNKS 1024
+
+class mallocHeap {
+	friend class mallocPrinter;
+	friend class mallocTester;
+
+	public:
+		mallocHeap();
+		~mallocHeap();
+
+		// Malloc interface
+		void * my_malloc(size_t size);
+		void * my_calloc(size_t nmemb, size_t size);
+		void * my_realloc(void * ptr, size_t size);
+		void my_free(void * p);
+
+	protected:
+		/*
+		 * The header contains all metadata about a block to be allocated
+		 * The size fields allow accessing the neighboring blocks in memory by
+		 * calculating their stating and ending addresses.
+		 *
+		 * When a block is free the free list pointer fields are set to the next
+		 * and previous blocks in the free list to allow faster traversal of the
+		 * freed blocks
+		 *
+		 * When a block is allocated the user's data starts by using the 16 bytes
+		 * reserved for the freelist pointers
+		 *
+		 * The zero length array at the end of the struct is the beginning of the
+		 * usable data in the block.
+		 *
+		 * FIELDS ALWAYS PRESENT
+		 * size_t size The size of the current block *including metadata*
+		 * size_t left_size The size of the block to the left (in memory)
+		 *
+		 * FIELDS PRESENT WHEN FREE
+		 * header * next The next block in the free list (only valid if free)
+		 * header * prev The previous block in the free list (only valid if free)
+		 *
+		 * FIELD PRESENT WHEN ALLOCATED
+		 * size_t[] canary magic value to detetmine if a block as been corrupted
+		 *
+		 * char[] data first byte of data pointed to by the list
+		 */
+		typedef struct header {
+		  size_t size_and_state;
+		  size_t left_size;
+		  union {
+		    // Used when the object is free
+		    struct {
+		      struct header * next;
+		      struct header * prev;
+		    };
+		    // Used when the object is allocated
+		    char data[0];
+		  };
+		} header;
+
+		/**
+		 * @brief enum representing the allocation state of a block
+		 *
+		 * enums provice a method of specifying a set of named values
+		 * http://en.cppreference.com/w/c/language/enum
+		 */
+		enum state {
+		  UNALLOCATED = 0,
+		  ALLOCATED = 1,
+		  FENCEPOST = 2,
+		};
+
+		// Helper functions for verifying that the data structures are structurally valid
+		static inline header * detect_cycles();
+		static inline header * verify_pointers();
+		static inline bool verify_freelist();
+		static inline header * verify_chunk(header * chunk);
+		static inline bool verify_tags();
+
+		// Debug list verifitcation
+		bool verify();
+
+	private:
+		// Helper functions for getting and storing size and state from header
+		// Since the size is a multiple of 8, the last 3 bits are always 0s.
+		// Therefore we use the 3 lowest bits to store the state of the object.
+		// This is going to save 8 bytes in all objects.
+		inline size_t get_block_size(header * h);
+		inline void set_block_size(header * h, size_t size);
+		inline enum state get_block_state(header *h);
+		inline void set_block_state(header * h, enum state s);
+		inline void set_block_size_and_state(header * h, size_t size, enum state s);
+
+		// Manage accessing and mutatig the freelist bitmap
+		inline void set_bit(size_t i);
+		inline void unset_bit(size_t i);
+		inline bool get_bit(size_t i);
+		inline size_t get_next_set_bit(size_t i);
+		inline size_t size_to_index(size_t size);
+
+		// Helper functions for manipulating pointers to headers
+		inline header * get_header_from_offset(void * ptr, ptrdiff_t off);
+		inline header * get_left_header(header * h);
+		inline header * ptr_to_header(void * p);
+
+		// Helper functions for freeing a block
+		inline void move_coalesced(header * block, size_t oldSize);
+		inline void coalesce_left(header * left, header * block, header * right);
+		inline void coalesce_right(header * block, header * right);
+		inline void coalesce_both(header * left, header * block, header * right);
+		inline void free_list_deallocate(header * block);
+		inline void deallocate_object(void * p);
+
+		// Helper functions for allocating more memory from the OS
+		inline void initialize_fencepost(header * fp, size_t left_size);
+		inline void insert_os_chunk(header * hdr);
+		inline void insert_fenceposts(void * raw_mem, size_t size);
+		header * allocate_chunk(size_t size);
+
+		// Helper functions for allocating a block
+		header * get_freelist_sentinel(size_t size);
+		header * get_populated_freelist_sentinel(size_t size);
+		inline header * split_block(header * block, size_t size);
+		inline header * free_list_get_allocable(size_t size);
+		inline header * allocate_object(size_t raw_size);
+
+		// Helper functions for manipulating the freelist
+		inline void freelist_remove(header * block);
+		inline void freelist_insert_between(header * block, header * prev, header * next);
+		inline void freelist_insert(header * block);
+
+		// Helper to find a block's right neighbor
+		header * get_right_header(header * h);
+
+		/*
+		 * Mutex to ensure thread safety for the freelist
+		 */
+		pthread_mutex_t mutex;
+
+		/*
+		 * Array of sentinel nodes for the freelists
+		 */
+		header freelistSentinels[N_LISTS];
+
+		/*
+		 * bitmap representing which of the freelists have available blocks. This
+		 * allows for an optimized block lookup. By finding the index in the
+		 * bitmap corresponding to the current request size and then finding the next
+		 * set bit in the bitmap we can determine the location of the block to allocate
+		 *
+		 * By using the bitmap we only need to load a small number of bytes into cache
+		 * to perform this lookup operation instead of checking each of the sentinels.
+		 */
+		char freelist_bitmap[(N_LISTS | 7) >> 3];
+
+		/*
+		 * Pointer to the second fencepost in the most recently allocated chunk from
+		 * the OS. Used for coalescing chunks
+		 */
+		header * lastFencePost;
+
+		/*
+		 * Pointer to maintian the base of the heap to allow printing based on the
+		 * distance from the base of the heap
+		 */
+		void * base;
+
+		header * osChunkList [MAX_OS_CHUNKS];
+		size_t numOsChunks;
+};
+
+#endif // MY_MALLOC_H
