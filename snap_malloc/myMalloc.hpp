@@ -13,7 +13,7 @@
 // #define ALLOC_HEADER_SIZE (sizeof(Header) - (2 * sizeof(Header *)))
 
 class MallocHeap {
-	friend class mallocPrinter;
+	friend class MallocPrinter;
 	friend class mallocTester;
 
 	public:
@@ -107,9 +107,9 @@ class MallocHeap {
 		inline size_t size_to_index(size_t size);
 
 		// Helper functions for manipulating pointers to Headers
-		inline Header * get_Header_from_offset(void * ptr, ptrdiff_t off);
-		inline Header * get_left_Header(Header * h);
-		inline Header * ptr_to_Header(void * p);
+		inline Header * get_header_from_offset(void * ptr, ptrdiff_t off);
+		inline Header * get_left_header(Header * h);
+		inline Header * ptr_to_header(void * p);
 
 		// Helper functions for freeing a block
 		inline void move_coalesced(Header * block, size_t oldSize);
@@ -138,7 +138,7 @@ class MallocHeap {
 		inline void freelist_insert(Header * block);
 
 		// Helper to find a block's right neighbor
-		Header * get_right_Header(Header * h);
+		Header * get_right_header(Header * h);
 
 		/*
 		 * Mutex to ensure thread safety for the freelist

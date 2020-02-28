@@ -8,17 +8,12 @@
 #include "myMalloc.hpp"
 #include "printing.h"
 
-#define MALLOC_COLOR "MALLOC_DEBUG_COLOR"
-
-static bool check_env;
-static bool use_color;
-
 /**
  * @brief Print just the block's size
  *
  * @param block The block to print
  */
-void mallocPrinter::basic_print(MallocHeap* mHeap, Header * block) {
+void MallocPrinter::basic_print(MallocHeap* mHeap, Header * block) {
 	printf("[%zd] -> ", mHeap->get_block_size(block));
 }
 
@@ -27,7 +22,7 @@ void mallocPrinter::basic_print(MallocHeap* mHeap, Header * block) {
  *
  * @param block The block to print
  */
-void mallocPrinter::print_list(MallocHeap* mHeap, Header * block) {
+void MallocPrinter::print_list(MallocHeap* mHeap, Header * block) {
 	printf("[%zd]\n", mHeap->get_block_size(block));
 }
 
@@ -38,7 +33,7 @@ void mallocPrinter::print_list(MallocHeap* mHeap, Header * block) {
  *
  * @return A string representing the allocation status
  */
-inline const char * mallocPrinter::allocated_to_string(char allocated) {
+inline const char * MallocPrinter::allocated_to_string(char allocated) {
   switch(allocated) {
     case UNALLOCATED:
       return "false";
@@ -50,7 +45,7 @@ inline const char * mallocPrinter::allocated_to_string(char allocated) {
   assert(false);
 }
 
-bool mallocPrinter::check_color() {
+bool MallocPrinter::check_color() {
   if (!check_env) {
     // genenv allows accessing environment varibles
     const char * var = getenv(MALLOC_COLOR);
@@ -65,7 +60,7 @@ bool mallocPrinter::check_color() {
  *
  * @param block The block to print the allocation status of
  */
-void mallocPrinter::print_color(MallocHeap* mHeap, Header * block) {
+void MallocPrinter::print_color(MallocHeap* mHeap, Header * block) {
   if (!check_color()) {
     return;
   }
@@ -83,14 +78,14 @@ void mallocPrinter::print_color(MallocHeap* mHeap, Header * block) {
   }
 }
 
-void mallocPrinter::clear_color() {
+void MallocPrinter::clear_color() {
   if (check_color()) {
     printf("\033[0;0m");
   }
 }
 
-inline bool mallocPrinter::is_sentinel(MallocHeap* mHeap, void * p) {
-  for (int i = 0; i < N_LISTS; i++) {
+inline bool MallocPrinter::is_sentinel(MallocHeap* mHeap, void * p) {
+  for (int i = 0; i < mHeap->N_LISTS; i++) {
     if (&(mHeap->freelistSentinels[i]) == p) {
       return true;
     }
@@ -106,7 +101,7 @@ inline bool mallocPrinter::is_sentinel(MallocHeap* mHeap, void * p) {
  *
  * @param p The pointer to print
  */
-void mallocPrinter::print_pointer(MallocHeap* mHeap, void * p) {
+void MallocPrinter::print_pointer(MallocHeap* mHeap, void * p) {
   if (is_sentinel(mHeap, p)) {
     printf("SENTINEL");
   } else {
@@ -123,17 +118,17 @@ void mallocPrinter::print_pointer(MallocHeap* mHeap, void * p) {
  *
  * @param block The block to print
  */
-void mallocPrinter::print_object(MallocHeap* mHeap, Header * block) {
+void MallocPrinter::print_object(MallocHeap* mHeap, Header * block) {
   print_color(mHeap, block);
 
   printf("[\n");
   printf("\taddr: ");
   print_pointer(mHeap, block);
   puts("");
-  printf("\tsize: %zd\n", get_block_size(block) );
+  printf("\tsize: %zd\n", mHeap->get_block_size(block) );
   printf("\tleft_size: %zd\n", block->left_size);
-  printf("\tallocated: %s\n", allocated_to_string(get_block_state(block)));
-  if (!get_block_state(block)) {
+  printf("\tallocated: %s\n", allocated_to_string(mHeap->get_block_state(block)));
+  if (!mHeap->get_block_state(block)) {
     printf("\tprev: ");
     print_pointer(mHeap, block->prev);
     puts("");
@@ -152,7 +147,7 @@ void mallocPrinter::print_object(MallocHeap* mHeap, Header * block) {
  *
  * @param block The block to print
  */
-void mallocPrinter::print_status(MallocHeap* mHeap, Header * block) {
+void MallocPrinter::print_status(MallocHeap* mHeap, Header * block) {
   print_color(mHeap, block);
   switch(mHeap->get_block_state(block)) {
     case UNALLOCATED:
@@ -192,9 +187,9 @@ static void print_bitmap() {
  * @param start Node to start printing at
  * @param end Node to stop printing at
  */
-void mallocPrinter::print_sublist(printFormatter pf, Header * start, Header * end) {
+void MallocPrinter::print_sublist(MallocHeap* mHeap, printFormatter pf, Header * start, Header * end) {
   for (Header * cur = start; cur != end; cur = cur->next) {
-    pf(cur);
+    pf(mHeap, cur);
   }
 }
 
@@ -203,16 +198,16 @@ void mallocPrinter::print_sublist(printFormatter pf, Header * start, Header * en
  *
  * @param pf Function to perform the Header printing
  */
-void mallocPrinter::freelist_print(printFormatter pf) {
+void MallocPrinter::freelist_print(MallocHeap* mHeap, printFormatter pf) {
   if (!pf) {
     return;
   }
 
   for (size_t i = 0; i < N_LISTS; i++) {
-    Header * freelist = &freelistSentinels[i];
+    Header * freelist = &(mHeap->freelistSentinels[i]);
     if (freelist->next != freelist) {
       printf("L%zu: ", i);
-      print_sublist(pf, freelist->next, freelist);
+      print_sublist(mHeap, pf, freelist->next, freelist);
       puts("");
     }
     fflush(stdout);
@@ -224,20 +219,20 @@ void mallocPrinter::freelist_print(printFormatter pf) {
  *
  * @param pf Function to perform the Header printing
  */
-void mallocPrinter::tags_print(printFormatter pf) {
+void MallocPrinter::tags_print(MallocHeap* mHeap, printFormatter pf) {
   if (!pf) {
     return;
   }
 
-  for (size_t i = 0; i < numOsChunks; i++) {
-    Header * chunk = osChunkList[i];
-    pf(chunk);
-    for (chunk = get_right_Header(chunk);
-         get_block_state(chunk) != FENCEPOST;
-         chunk = get_right_Header(chunk)) {
-        pf(chunk);
+  for (size_t i = 0; i < mHeap->numOsChunks; i++) {
+    Header * chunk = mHeap->osChunkList[i];
+    pf(mHeap, chunk);
+    for (chunk = mHeap->get_right_header(chunk);
+         mHeap->get_block_state(chunk) != FENCEPOST;
+         chunk = mHeap->get_right_header(chunk)) {
+        pf(mHeap, chunk);
     }
-    pf(chunk);
+    pf(mHeap, chunk);
     fflush(stdout);
   }
 }

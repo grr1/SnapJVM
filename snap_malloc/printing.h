@@ -2,15 +2,22 @@
 #define PRINTING_H
 #include "myMalloc.hpp"
 
-class mallocPrinter {
+class MallocPrinter {
 	public:
 		/* Functions to print the freelist and boundary tag data structures taking a
 		 * one of the above printing functions as a function pointer
 		 */
-		void freelist_print(printFormatter pf);
-		void tags_print(printFormatter pf);
+		void freelist_print(MallocHeap* mHeap, printFormatter pf);
+		void tags_print(MallocHeap* mHeap, printFormatter pf);
 
 	private:
+		enum {
+			MALLOC_COLOR = "MALLOC_DEBUG_COLOR";
+		};
+
+		static bool check_env;
+		static bool use_color;
+
 		/* Define printFormatter to be a function pointer type taking a sinle parameter
 		 * (a Header pointer) and returning void
 		 *
@@ -33,7 +40,7 @@ class mallocPrinter {
 		void print_status(MallocHeap* mHeap, Header * block);
 
 		/* Helpers */
-		void print_sublist(printFormatter pf, Header * start, Header * end);
+		void print_sublist(MallocHeap* mHeap, printFormatter pf, Header * start, Header * end);
 		void print_pointer(MallocHeap* mHeap, void * p);
 };
 

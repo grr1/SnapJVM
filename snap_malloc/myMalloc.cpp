@@ -113,7 +113,7 @@ inline size_t MallocHeap::size_to_index(size_t size) {
  *
  * @return a pointer to a Header offset bytes from pointer
  */
-inline MallocHeap::Header * MallocHeap::get_Header_from_offset(void * ptr, ptrdiff_t off) {
+inline MallocHeap::Header * MallocHeap::get_header_from_offset(void * ptr, ptrdiff_t off) {
   return (Header *)((char *) ptr + off);
 }
 
@@ -124,8 +124,8 @@ inline MallocHeap::Header * MallocHeap::get_Header_from_offset(void * ptr, ptrdi
  *
  * @return Header to the right of h
  */
-MallocHeap::Header * MallocHeap::get_right_Header(Header * h) {
-	return get_Header_from_offset(h, get_block_size(h));
+MallocHeap::Header * MallocHeap::get_right_header(Header * h) {
+	return get_header_from_offset(h, get_block_size(h));
 }
 
 /**
@@ -135,8 +135,8 @@ MallocHeap::Header * MallocHeap::get_right_Header(Header * h) {
  *
  * @return Header to the right of h
  */
-inline MallocHeap::Header * MallocHeap::get_left_Header(Header * h) {
-  return get_Header_from_offset(h, -h->left_size);
+inline MallocHeap::Header * MallocHeap::get_left_header(Header * h) {
+  return get_header_from_offset(h, -h->left_size);
 }
 
 /**
@@ -181,7 +181,7 @@ inline void MallocHeap::insert_fenceposts(void * raw_mem, size_t size) {
   //insert_os_chunk(leftFencePost);
 
   // Insert a fencepost at the right edge of the block
-  Header * rightFencePost = get_Header_from_offset(mem, size - ALLOC_HEADER_SIZE); //sizeof(Header));
+  Header * rightFencePost = get_header_from_offset(mem, size - ALLOC_HEADER_SIZE); //sizeof(Header));
   initialize_fencepost(rightFencePost, size - 2 * ALLOC_HEADER_SIZE); //sizeof(Header));
 }
 
@@ -248,8 +248,8 @@ MallocHeap::Header * MallocHeap::get_populated_freelist_sentinel(size_t size) {
 inline MallocHeap::Header * MallocHeap::split_block(Header * block, size_t size) {
   Header * remainder = block;
   size_t oldSize = get_block_size(remainder);
-  Header * right = get_Header_from_offset(block, get_block_size(block));
-  Header * ret = get_Header_from_offset(block, get_block_size(block) - size);
+  Header * right = get_header_from_offset(block, get_block_size(block));
+  Header * ret = get_header_from_offset(block, get_block_size(block) - size);
 
   // Update the remainder's size fields
   set_block_size(remainder, get_block_size(block) - size);
@@ -362,8 +362,8 @@ inline MallocHeap::Header * MallocHeap::allocate_object(size_t raw_size) {
     }
 
     /* Check if next to another chunk from the OS */
-    Header * prevFencePost = get_Header_from_offset(newChunk, 2 * -ALLOC_HEADER_SIZE);
-    Header * rfp = get_Header_from_offset(newChunk, get_block_size(newChunk));
+    Header * prevFencePost = get_header_from_offset(newChunk, 2 * -ALLOC_HEADER_SIZE);
+    Header * rfp = get_header_from_offset(newChunk, get_block_size(newChunk));
     if (prevFencePost == lastFencePost) {
       // Move Header to fencepost
 	    set_block_size(prevFencePost, get_block_size(newChunk) + 2 * ALLOC_HEADER_SIZE);
@@ -377,7 +377,7 @@ inline MallocHeap::Header * MallocHeap::allocate_object(size_t raw_size) {
     } else {
       // Insert chunk
       freelist_insert(newChunk);
-      insert_os_chunk(get_Header_from_offset(newChunk, -ALLOC_HEADER_SIZE));
+      insert_os_chunk(get_header_from_offset(newChunk, -ALLOC_HEADER_SIZE));
     }
     lastFencePost = rfp;
 
@@ -395,7 +395,7 @@ inline MallocHeap::Header * MallocHeap::allocate_object(size_t raw_size) {
  *
  * @return A pointer to the Header of the block
  */
-inline MallocHeap::Header * MallocHeap::ptr_to_Header(void * p) {
+inline MallocHeap::Header * MallocHeap::ptr_to_header(void * p) {
   return (Header *)((char *) p - ALLOC_HEADER_SIZE); //sizeof(Header));
 }
 
@@ -434,7 +434,7 @@ inline void MallocHeap::coalesce_left(Header * left, Header * block, Header * ri
  * @param right The block to the right of the block being freed
  */
 inline void MallocHeap::coalesce_right(Header * block, Header * right) {
-  Header * rightRight = get_right_Header(right);
+  Header * rightRight = get_right_header(right);
   size_t oldSize = get_block_size(right);
 
   // Update sizes
@@ -459,7 +459,7 @@ inline void MallocHeap::coalesce_right(Header * block, Header * right) {
  * @param right The block to the right of the block being freed
  */
 inline void MallocHeap::coalesce_both(Header * left, Header * block, Header * right) {
-  Header * rightRight = get_right_Header(right);
+  Header * rightRight = get_right_header(right);
   size_t oldSize = get_block_size(left);
 
   // Update sizes
@@ -478,8 +478,8 @@ inline void MallocHeap::coalesce_both(Header * left, Header * block, Header * ri
  * @param block block to return to the free list
  */
 inline void MallocHeap::free_list_deallocate(Header * block) {
-  Header * left = get_left_Header(block);
-  Header * right = get_right_Header(block);
+  Header * left = get_left_header(block);
+  Header * right = get_right_header(block);
 
   if (get_block_state(left) && get_block_state(right)) {
     freelist_insert(block);
@@ -505,7 +505,7 @@ inline void MallocHeap::deallocate_object(void * p) {
   }
 
   // Retrieve the block's Header from the pointer and verify it has not be overflowed
-  Header * block = ptr_to_Header(p);
+  Header * block = ptr_to_header(p);
   if (get_block_state(block) == UNALLOCATED) {
     fprintf(stderr, "Double Free Detected\n");
     assert(false);
@@ -596,8 +596,8 @@ inline MallocHeap::Header * MallocHeap::verify_chunk(Header * chunk) {
     return chunk;
   }
 
-	for (; get_block_state(chunk) != FENCEPOST; chunk = get_right_Header(chunk)) {
-	  if (get_block_size(chunk)  != get_right_Header(chunk)->left_size) {
+	for (; get_block_state(chunk) != FENCEPOST; chunk = get_right_header(chunk)) {
+	  if (get_block_size(chunk)  != get_right_header(chunk)->left_size) {
       fprintf(stderr, "Invalid sizes\n");
       print_object(chunk);
       return chunk;
@@ -640,10 +640,10 @@ MallocHeap::MallocHeap() {
   // Allocate the first chunk from the OS
   Header * block = allocate_chunk(ARENA_SIZE);
 
-  Header * prevFencePost = get_Header_from_offset(block, -ALLOC_HEADER_SIZE);
+  Header * prevFencePost = get_header_from_offset(block, -ALLOC_HEADER_SIZE);
   insert_os_chunk(prevFencePost);
 
-  lastFencePost = get_Header_from_offset(block, get_block_size(block) );
+  lastFencePost = get_header_from_offset(block, get_block_size(block) );
 
   // Set the base pointer to the beginning of the first fencepost in the first
   // chunk from the OS

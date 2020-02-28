@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "myMalloc.hpp"
+#include "printing.h"
 #include "testing.h"
 
 /**
@@ -17,9 +18,9 @@ void mallocTester::initialize_test(const char * name) {
 
   printf("INTIAL STATE\n\n");
   printf("FREELIST\n");
-  mHeap->freelist_print(print_object);
+  mPrinter->freelist_print(mHeap, print_object);
   printf("TAGS\n");
-  mHeap->tags_print(print_object);
+  mPrinter->tags_print(mHeap, print_object);
 }
 
 /**
@@ -30,9 +31,9 @@ void mallocTester::finalize_test() {
   printf("FINAL STATE\n\n");
 
   printf("FREELIST\n");
-  mHeap->freelist_print(print_object);
+  mPrinter->freelist_print(mHeap, print_object);
   printf("TAGS\n");
-  mHeap->tags_print(print_object);
+  mPrinter->tags_print(mHeap, print_object);
   mHeap->verify();
 }
 
@@ -79,7 +80,7 @@ void ** mallocTester::mallocing_loop(void ** array, size_t size, size_t n, print
     }
   }
   if (!silent) {
-    mHeap->tags_print(pf);
+    mPrinter->tags_print(mHeap, pf);
     puts("");
   }
   mHeap->verify();
@@ -132,7 +133,7 @@ void mallocTester::freeing_loop(void ** array, size_t size, size_t n, printForma
   if (!silent) {
     if (n == 1) {
       printf("freeing %zu bytes (", size);
-      mHeap->print_pointer(mHeap, (char *) *array - sizeof(Header));
+      mPrinter->print_pointer(mHeap, (char *) *array - sizeof(Header));
       puts(")");
     } else {
       printf("freeing %zu bytes from %zu allocations\n", size, n);
@@ -142,7 +143,7 @@ void mallocTester::freeing_loop(void ** array, size_t size, size_t n, printForma
     check_and_free((char*)array[i], size);
   }
   if (!silent) {
-    mHeap->tags_print(pf);
+    mPrinter->tags_print(mHeap, pf);
     puts("");
   }
   mHeap->verify();
