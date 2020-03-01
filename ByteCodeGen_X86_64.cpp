@@ -181,6 +181,11 @@ ByteCodeGen_X86_64::codeGen()
 				_stackFRameJavaStack = _stackFrameLocalVars + _max_locals;
 				_stackFrameEnd = _stackFRameJavaStack + _max_stack;
 
+                //align stack pointer to 16 bytes
+                if(_stackFrameEnd%2 != 0){
+                    _stackFrameEnd+=1;
+                }
+
 				*_codeStrStream << "\n";
 				*_codeStrStream << _method->_methodName << ":\n";
 				*_codeStrStream << "       #max_stack=" << _max_stack
@@ -253,7 +258,7 @@ ByteCodeGen_X86_64::codeGen()
 
 					// Generate code for every ByteCode
 					codeGenOne(c, codeArray, k);
-
+                    
 					int byteCodeLength = ByteCode::_lengths[c];
 					//calculate the length of variable-length ByteCode
 					//similar to Code printing in method print() in ClassClass.cpp
@@ -272,9 +277,9 @@ ByteCodeGen_X86_64::codeGen()
 					  p = &codeArray[k+padBytes+9];
 					  int highValue = (int)ClassParser::readU4(p);
 					  byteCodeLength = padBytes + 13 + (highValue - lowValue + 1) * 4;
-					}
-					k += byteCodeLength;
-					uptr += byteCodeLength;
+					} 
+					k += ByteCode::_lengths[c] & 0xF;
+					uptr += ByteCode::_lengths[c];
 				}
 
 				// Done by return
@@ -323,14 +328,14 @@ simplePrintf(const char * s) {
 	printf("%s\n",s);
 }
 
-void simplePrintfD(double *d){
-  
-  //void* l = ReverseEndian(d,sizeof(d));
-  
-  printf("d=%p\n", d);
-  printf("d=%lf\n", *d);
+void simplePrintfD( u8 d){
+  printf("d = %lf\n", *(double*)&d);
 }
-bool doubletest = false;
+
+
+int doubletest = 0;
+
+
 void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) {
 	switch(code) {
 	case ByteCode::_nop:{
@@ -425,7 +430,8 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 			if (info != NULL) { // skip entries with no info
 				*this->_codeStrStream << "       movq    $0x" << std::hex
 						<< (unsigned long) info->toData(_classClass)
-						<< ", %rdi\n";
+						<< ", %" << getReg() << "\n";
+                pushVirtualStack();
 				//printf("         mov #0x%016lx,%%rdi\n", (unsigned long) info->toData(_classClass));
 			}
         }
@@ -454,7 +460,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_ldc2_w:{
-            doubletest = true;
+
             u1 * p1 = &codeArray[k+1];
             u1 arg1 = ClassParser::readU1(p1);
             u1 * p2 = &codeArray[k+2];
@@ -470,8 +476,9 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
             
             if (info != NULL){
                 u8 *doubleAsLong = (u8*) &(dinfo->value);
-                *this->_codeStrStream << "       movq   $" << doubleAsLong << ", %rdi" << "\n";
-                //*this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", %rdi" << "\n";
+                //*this->_codeStrStream << "       movq   $" << dinfo->value << ", %rdi" << "\n";
+                *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", %" << getReg() << "\n";
+                doubletest = 1;
             }
             pushVirtualStack();
         }
@@ -499,7 +506,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dload:{
-          notImplemented(code);
+            u1 * p = &codeArray[k+1];
+            u1 arg = ClassParser::readU1(p);
+            int localvar = (int)arg;
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
@@ -562,25 +574,34 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dload_0:{
-          notImplemented(code);
+            int localvar = code - ByteCode::_dload_0;
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
     case ByteCode::_dload_1:{
             int localvar = code - ByteCode::_dload_0;
             *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
-            *_codeStrStream << "      movsd    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
+            *_codeStrStream << "      movq    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
             pushVirtualStack();
         }
         break;
 
     case ByteCode::_dload_2:{
-          notImplemented(code);
+            int localvar = code - ByteCode::_dload_0;
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
     case ByteCode::_dload_3:{
-          notImplemented(code);
+            int localvar = code - ByteCode::_dload_0;
+            *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    -" << 8 * (_stackFrameLocalVars + localvar) << "(%rbp),%" << this->getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
@@ -664,7 +685,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dstore:{
-          notImplemented(code);
+            popVirtualStack();
+            u1 * p = &codeArray[k+1];
+            u1 arg = ClassParser::readU1(p);
+            int localvar = (int)arg;
+            *_codeStrStream << "    #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
         }
         break;
 
@@ -727,7 +753,10 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_dstore_0:{
-          notImplemented(code);
+            popVirtualStack();
+            int localvar = code - ByteCode::_dstore_0;
+            *_codeStrStream << "    #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
         }
         break;
 
@@ -735,17 +764,23 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
             popVirtualStack();
             int localvar = code - ByteCode::_dstore_0;
             *_codeStrStream << "    #" << ByteCode::_name[code] << "\n";
-            *_codeStrStream << "      movsd    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
+            *_codeStrStream << "      movq    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
         }
         break;
 
     case ByteCode::_dstore_2:{
-          notImplemented(code);
+            popVirtualStack();
+            int localvar = code - ByteCode::_dstore_0;
+            *_codeStrStream << "    #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
         }
         break;
 
     case ByteCode::_dstore_3:{
-          notImplemented(code);
+            popVirtualStack();
+            int localvar = code - ByteCode::_dstore_0;
+            *_codeStrStream << "    #" << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "      movq    %" << this->getReg() << "," << "-" << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
         }
         break;
 
@@ -887,9 +922,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
             const char * arg1 = this->getReg();
             popVirtualStack();
             const char * arg2 = this->getReg();
-            pushVirtualStack();
             *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
-            *_codeStrStream << "      addsd    %" << arg1 << "," << "%" << arg2 << "\n";
+            *_codeStrStream << "      movq    %" << arg1 << ", %" << "xmm1\n";
+            *_codeStrStream << "      movq    %" << arg2 << ", %" << "xmm0\n";
+            *_codeStrStream << "      addsd    %" << "xmm1" << ", %" << "xmm0" << "\n";
+            *_codeStrStream << "      movq    %" << "xmm0" << ", %" << getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
@@ -919,9 +957,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
             const char * arg1 = this->getReg();
             popVirtualStack();
             const char * arg2 = this->getReg();
-            pushVirtualStack();
             *_codeStrStream << "      #" << ByteCode::_name[code] << "\n";
-            *_codeStrStream << "      addsd    %" << arg1 << "," << "%" << arg2 << "\n";
+            *_codeStrStream << "      movq    %" << arg1 << ", %" << "xmm1\n";
+            *_codeStrStream << "      movq    %" << arg2 << ", %" << "xmm0\n";
+            *_codeStrStream << "      subsd    %" << "xmm1" << ", %" << "xmm0" << "\n";
+            *_codeStrStream << "      movq    %" << "xmm0" << ", %" << getReg() << "\n";
+            pushVirtualStack();
         }
         break;
 
@@ -1441,16 +1482,17 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_invokevirtual:{
     	    *this->_codeStrStream << "";
 			*this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
-            if (doubletest){
+            popVirtualStack();
+            *this->_codeStrStream << "      mov     %" << getReg() << ", %rdi\n";
+            if (doubletest == 1){
                 *this->_codeStrStream << "      #double test\n";
                 *this->_codeStrStream << "       mov    $0x" << std::hex
 		  						  << (unsigned long) simplePrintfD << ",%rax" << "\n";
             } else {
-			*this->_codeStrStream << "       mov    $0x" << std::hex
+			    *this->_codeStrStream << "       mov    $0x" << std::hex
 		  						  << (unsigned long) simplePrintf << ",%rax" << "\n";
             }
 			*this->_codeStrStream << "       call   *%rax\n";
-            doubletest = false;
 			//notImplemented(code);
         }
         break;
