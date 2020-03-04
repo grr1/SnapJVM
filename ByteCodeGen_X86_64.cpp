@@ -323,15 +323,15 @@ ByteCodeGen_X86_64::restoreRegsBeforeReturn()
 
 void
 simplePrintf(const char * s) {
-	printf("string one\n");
-	printf("%ld\n",s);
+	//printf("string one\n");
+	printf("%s\n",s);
 }
 
-void simplePrintfD(long* d){
+void simplePrintfD(int d){
   //void* l = ReverseEndian(d,sizeof(d));
-  printf("this one\n");
+  //printf("this one\n");
   //printf("d=%d\n", *d);
-  printf("p=%ld\n", d);
+  printf("p=%d\n", d);
   //printf("d=%lf\n", *d);
 }
 bool doubletest = false;
@@ -1455,9 +1455,9 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
                 *this->_codeStrStream << "       mov    $0x" << std::hex
 		  						  << (unsigned long) simplePrintfD << ",%rax" << "\n";
             } else {
-			*this->_codeStrStream << "      mov %rbx,%rdi\n";
+			//*this->_codeStrStream << "       mov %rbx,%rdi\n";
 			*this->_codeStrStream << "       mov    $0x" << std::hex
-		  						  << (unsigned long) simplePrintfD << ",%rax" << "\n";
+		  						  << (unsigned long) simplePrintf << ",%rax" << "\n";
             }
 			*this->_codeStrStream << "       call   *%rax\n";
             doubletest = false;
