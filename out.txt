@@ -1,0 +1,166 @@
+magic=0xCAFEBABE
+major=52 minor=0
+_constant_pool_count=44
+--------------------------------------------------
+Code Generation:
+--------------------------------------------------
+Type name:Method Name:<init>    0:Code
+         0: aload_0 
+         1: invokespecial  #1	// java/lang/Object."<init>":()V
+         4: return 
+
+===========================================
+
+<init>:
+       #max_stack=1       max_locals=1
+
+       # Save frame pointer
+       pushq   %rbp
+       movq    %rsp, %rbp
+
+       # Allocate space for locals and stack
+       subq    $104,%rsp
+       # Save arguments
+       mov   rdi,-0(%rbp)
+       mov   rsi,-8(%rbp)
+       mov   rdx,-16(%rbp)
+       mov   rcx,-24(%rbp)
+       mov   r8,-32(%rbp)
+       mov   r9,-40(%rbp)
+
+
+       #Save callee saved registers
+       mov   rbx,-48(%rbp)
+       mov   r12,-56(%rbp)
+       mov   r13,-64(%rbp)
+       mov   r14,-72(%rbp)
+       mov   r15,-80(%rbp)
+
+offset_0:
+       # Not implemented. aload_0
+offset_1:
+       # Not implemented. invokespecial
+offset_4:
+
+       #Restore callee saved registers
+       mov   -48(%rbp), %rbx
+       mov   -56(%rbp), %r12
+       mov   -64(%rbp), %r13
+       mov   -72(%rbp), %r14
+       mov   -80(%rbp), %r15
+
+       # return
+       movq    %rbp, %rsp
+       leave
+       ret
+
+
+
+===========================================
+
+<init>:
+       #max_stack=1       max_locals=1
+
+       # Save frame pointer
+       pushq   %rbp
+       movq    %rsp, %rbp
+
+       # Allocate space for locals and stack
+       subq    $104,%rsp
+       # Save arguments
+       mov   rdi,-0(%rbp)
+       mov   rsi,-8(%rbp)
+       mov   rdx,-16(%rbp)
+       mov   rcx,-24(%rbp)
+       mov   r8,-32(%rbp)
+       mov   r9,-40(%rbp)
+
+
+       #Save callee saved registers
+       mov   rbx,-48(%rbp)
+       mov   r12,-56(%rbp)
+       mov   r13,-64(%rbp)
+       mov   r14,-72(%rbp)
+       mov   r15,-80(%rbp)
+
+offset_0:
+       # Not implemented. aload_0
+offset_1:
+       # Not implemented. invokespecial
+offset_4:
+
+       #Restore callee saved registers
+       mov   -48(%rbp), %rbx
+       mov   -56(%rbp), %r12
+       mov   -64(%rbp), %r13
+       mov   -72(%rbp), %r14
+       mov   -80(%rbp), %r15
+
+       # return
+       movq    %rbp, %rsp
+       leave
+       ret
+
+ = 55 48 89 e5 48 83 ec 68 48 8b 5d d0 4c 8b 65 c8 4c 8b 6d c0 4c 8b 75 b8 4c 8b 7d b0 48 89 ec c9 c3 
+Compiled: 33 bytes, statements: 31
+
+Type name:Method Name:main    0:Code
+         0: getstatic  #2	// java/lang/System."out":Ljava/io/PrintStream;
+         3: ldc  #3	// Here: 1\n
+arg=3
+         5: invokevirtual  #4	// java/io/PrintStream."println":(Ljava/lang/String;)V
+         8: bipush 
+         10: istore_1 
+         11: getstatic  #2	// java/lang/System."out":Ljava/io/PrintStream;
+         14: ldc  #5	// Here 2\n
+arg=5
+         16: invokevirtual  #4	// java/io/PrintStream."println":(Ljava/lang/String;)V
+         19: bipush 
+         21: istore_2 
+         22: getstatic  #2	// java/lang/System."out":Ljava/io/PrintStream;
+         25: ldc  #6	// Here 3\n
+arg=6
+         27: invokevirtual  #4	// java/io/PrintStream."println":(Ljava/lang/String;)V
+         30: bipush 
+         32: istore_3 
+         33: getstatic  #2	// java/lang/System."out":Ljava/io/PrintStream;
+         36: ldc  #7	// Here 4\n
+arg=7
+         38: invokevirtual  #4	// java/io/PrintStream."println":(Ljava/lang/String;)V
+         41: iload_1 
+         42: iload_2 
+         43: iadd 
+         44: istore 
+
+===========================================
+
+main:
+       #max_stack=2       max_locals=5
+
+       # Save frame pointer
+       pushq   %rbp
+       movq    %rsp, %rbp
+
+       # Allocate space for locals and stack
+       subq    $144,%rsp
+       # Save arguments
+       mov   rdi,-0(%rbp)
+       mov   rsi,-8(%rbp)
+       mov   rdx,-16(%rbp)
+       mov   rcx,-24(%rbp)
+       mov   r8,-32(%rbp)
+       mov   r9,-40(%rbp)
+
+
+       #Save callee saved registers
+       mov   rbx,-48(%rbp)
+       mov   r12,-56(%rbp)
+       mov   r13,-64(%rbp)
+       mov   r14,-72(%rbp)
+       mov   r15,-80(%rbp)
+
+offset_0:
+       # Not implemented. getstatic
+offset_3:
+       #ldc #3
+       movq    $0x

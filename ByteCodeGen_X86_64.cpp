@@ -145,6 +145,7 @@ ByteCodeGen_X86_64::codeGen()
 
 				_method->_maxStack = _max_stack;
 				_method->_maxLocals = _max_locals;
+
 				u2 max_args = 6;
 				_method->_maxArgs = max_args;
 
@@ -253,8 +254,30 @@ ByteCodeGen_X86_64::codeGen()
 					// Generate code for every ByteCode
 					codeGenOne(c, codeArray, k);
 
-					k+=ByteCode::_lengths[c];
-					uptr += ByteCode::_lengths[c];
+					int byteCodeLength = ByteCode::_lengths[c];
+					//calculate the length of variable-length ByteCode
+					//similar to Code printing in method print() in ClassClass.cpp
+					if (c == ByteCode::_istore|| c == ByteCode::_iload){
+					  byteCodeLength = 2;
+					}
+					if(c == ByteCode::_lookupswitch){
+					  int padBytes = 3 - k%4;
+					  //npairs starts at k+1+padBytes + 4;
+					  u1 * p = &codeArray[k+padBytes+5];
+					  int nPairs = (int)ClassParser::readU4(p);
+					  byteCodeLength = padBytes + 9 + nPairs * 8;
+					}else if(c == ByteCode::_tableswitch){
+					  int padBytes = 3 - k%4;
+					  //lowbyte starts at k+1+padBytes + 4;
+					  u1 * p = &codeArray[k+padBytes+5];
+					  int lowValue = (int)ClassParser::readU4(p);
+					  //highbyte starts at k+1+padBytes + 8;
+					  p = &codeArray[k+padBytes+9];
+					  int highValue = (int)ClassParser::readU4(p);
+					  byteCodeLength = padBytes + 13 + (highValue - lowValue + 1) * 4;
+					}
+					k += byteCodeLength;
+					uptr += byteCodeLength;
 				}
 
 				// Done by return
@@ -294,17 +317,24 @@ ByteCodeGen_X86_64::restoreRegsBeforeReturn()
 	*_codeStrStream << "       #Restore callee saved registers\n";
 	for (int i = 0; i < _maxStackRegs; i++) {
 		*_codeStrStream << "       mov   -"<< std::dec << 8*(i+_stackFrameCalleeSaved)  << "(%rbp), %" << _stackRegs[i] << "\n";
-	}	
+	}
 	*_codeStrStream << "\n";
 }
 
 void
-simplePrintf(int* d) {
-	printf("here\n");
-	printf("%d\n",d);
-	//printf("%p\n",d);
+simplePrintf(const char * s) {
+	printf("string one\n");
+	printf("%ld\n",s);
 }
 
+void simplePrintfD(long* d){
+  //void* l = ReverseEndian(d,sizeof(d));
+  printf("this one\n");
+  //printf("d=%d\n", *d);
+  printf("p=%ld\n", d);
+  //printf("d=%lf\n", *d);
+}
+bool doubletest = false;
 void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) {
 	switch(code) {
 	case ByteCode::_nop:{
@@ -369,7 +399,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
     case ByteCode::_bipush:{
 			u1 * p = &codeArray[k+1];
-			u1 arg = ClassParser::readU1(p);
+			signed char arg = (signed char)ClassParser::readU1(p);
 			*_codeStrStream << "       #"
 					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
 			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
@@ -379,7 +409,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
     case ByteCode::_sipush:{
 			u1 * p = &codeArray[k+1];
-			u2 arg = ClassParser::readU2(p);
+			short arg = (short)ClassParser::readU2(p);
 			*_codeStrStream << "       #"
 					<< ByteCode::_name[code] << " "<< std::dec << (int) arg <<"\n";
 			*_codeStrStream << "       movq $" << (int) arg << ", %" << getReg() << "\n";
@@ -399,19 +429,55 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 			if (info != NULL) { // skip entries with no info
 				*this->_codeStrStream << "       movq    $0x" << std::hex
 						<< (unsigned long) info->toData(_classClass)
-						<< ", %" << getReg() << "\n";
+						<< ", %rdi\n";
 				//printf("         mov #0x%016lx,%%rdi\n", (unsigned long) info->toData(_classClass));
 			}
         }
         break;
 
     case ByteCode::_ldc_w:{
-          notImplemented(code);
+            u1 * p1 = &codeArray[k+1];
+            u1 arg1 = ClassParser::readU1(p1);
+            u1 * p2 = &codeArray[k+2];
+            u1 arg2 = ClassParser::readU1(p2);
+            int arg = ((int)arg1) << 8;
+            arg = arg | ((int)arg2);
+            *this->_codeStrStream << "       #" << ByteCode::_name[code] << " #" << arg << "\n";
+            if (SnapJVMRuntime::isVerboseMode()){
+                printf("arg=%d\n",arg);
+            }
+            ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            CONSTANT_Double_info *dinfo = (CONSTANT_Double_info*) info;
+
+            if (info != NULL){
+                u8 *doubleAsLong = (u8*) &(dinfo->value);
+                *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", " << this->getReg() << "\n";
+            }
+            pushVirtualStack();
         }
         break;
 
     case ByteCode::_ldc2_w:{
-          notImplemented(code);
+            doubletest = true;
+            u1 * p1 = &codeArray[k+1];
+            u1 arg1 = ClassParser::readU1(p1);
+            u1 * p2 = &codeArray[k+2];
+            u1 arg2 = ClassParser::readU1(p2);
+            int arg = ((int)arg1) << 8;
+            arg = arg | ((int)arg2);
+            *this->_codeStrStream << "       #" << ByteCode::_name[code] << " #" << arg << "\n";
+            if (SnapJVMRuntime::isVerboseMode()){
+                printf("arg=%d\n",arg);
+            }
+            ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            CONSTANT_Double_info *dinfo = (CONSTANT_Double_info*) info;
+            
+            if (info != NULL){
+                u8 *doubleAsLong = (u8*) &(dinfo->value);
+                *this->_codeStrStream << "       movq   $" << doubleAsLong << ", %rdi" << "\n";
+                //*this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", %rdi" << "\n";
+            }
+            pushVirtualStack();
         }
         break;
 
@@ -762,12 +828,11 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
           popVirtualStack();
 	  const char * arg2 = this->getReg();
 	  pushVirtualStack();
-	  //pushVirtualStack();
+	  pushVirtualStack();
 	  
 	  *_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
 	  *_codeStrStream << "       movq    %" << arg2 << "," << "%" << arg1 << "\n";
         }
-	//return;
         break;
 
     case ByteCode::_dup_x1:{
@@ -804,20 +869,10 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     			popVirtualStack();
 			const char * arg1 = this->getReg();
 			popVirtualStack();
-			//popVirtualStack();
 			const char * arg2 = this->getReg();
 			pushVirtualStack();
-			
-			//pushVirtualStack();
-
 			*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
-			//*_codeStrStream << "formatStr:	db 'Arg1 is %d\n', 10,0" << "\n";
-			//*_codeStrStream << "       mov rax,formatStr " << "\n";
-			//*_codeStrStream << "       mov %rbx,5 " << "\n";
-			//*_codeStrStream << "       mov al,0 " << "\n";
-			//*_codeStrStream << "       call  printf" << "\n";
-			//*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
-			*_codeStrStream << "       addq    %" << arg1 << "," << "%" << arg2 << "\n";
+			*_codeStrStream << "       addq    %" << arg2 << "," << "%" << arg1 << "\n";
 		}
         break;
 
@@ -1012,7 +1067,6 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_iand:{
-		//printf("here");
           	popVirtualStack();
 		const char* arg1 = this->getReg();
 		popVirtualStack();
@@ -1061,7 +1115,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 //      notImplemented(code);
 
       /**
-       * Code generation below should be correct;
+       * Code generation below has not been fully tested;
        * There might be a problem with parsing iinc
        * as the program will stop parsing the rest if encountering iinc
        *   -- Muyuan 12/6/19
@@ -1085,7 +1139,6 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
       }else{
 	*_codeStrStream << "       addq    $" << incvalue << "," << "%" << reg << "\n";
       }
-
       *_codeStrStream << "       movq    %" << reg << "," << "-"
 							  << 8 * (_stackFrameLocalVars+localvar) << "(%rbp)\n";
       
@@ -1276,12 +1329,67 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_tableswitch:{
-          notImplemented(code);
+          int padBytes = 3 - k%4;
+	  //default bytes starts at k+1+padBytes
+	  u1 * p = &codeArray[k+padBytes+1];
+	  int defaultOffset = (int)ClassParser::readU4(p);
+	  
+	  //lowbyte starts at k+1+padBytes + 4;
+	  p = &codeArray[k+padBytes+5];
+	  int lowValue = (int)ClassParser::readU4(p);
+	  //highbyte starts at k+1+padBytes + 8;
+	  p = &codeArray[k+padBytes+9];
+	  int highValue = (int)ClassParser::readU4(p);
+	  
+	  int numRows = highValue - lowValue + 1;
+	  //get top number in stack
+	  popVirtualStack();
+	  const char* reg = getReg();
+	  //use loop to compare it to every value in the table
+	  *this->_codeStrStream << "       #"
+				<< ByteCode::_name[code] << " ["<< std::dec << lowValue << ", " << highValue <<"]\n";
+	  
+	  for(int i = 0; i < numRows; i++){
+	    //jump offsets starts at k+1+padBytes + 12 + 4*i;
+	    p = &codeArray[k+padBytes+ 13 + 4*i];
+	    int jumpOffset = (int)ClassParser::readU4(p);
+	    int jumpTo = k + jumpOffset;
+	    *this->_codeStrStream << "       cmpq $" << lowValue + i << ", %" << reg <<"\n";
+	    *this->_codeStrStream << "       je offset_" << std::dec << jumpTo << "\n";
+	    
+	  }
+	  //jump to default
+	  *this->_codeStrStream << "       jmp offset_" << std::dec << k + defaultOffset << "\n";
         }
         break;
 
     case ByteCode::_lookupswitch:{
-          notImplemented(code);
+          int padBytes = 3 - k%4;
+	  //npairs starts at k+1+padBytes + 4;
+	  u1 * p = &codeArray[k+padBytes+5];
+	  int nPairs = (int)ClassParser::readU4(p);
+	  p = &codeArray[k+padBytes+1];
+	  int defaultOffset = (int)ClassParser::readU4(p);
+	  //get top number in stack
+	  popVirtualStack();
+	  const char* reg = getReg();
+	  
+	  *this->_codeStrStream << "       #"
+				<< ByteCode::_name[code] << " ("<< std::dec << nPairs <<" pairs)\n";
+
+	  for(int i = 0; i < nPairs; i++){
+	    p = &codeArray[k+padBytes+ 9 + 8*i];
+	    int caseNumber = (int)ClassParser::readU4(p);
+	    p = &codeArray[k+padBytes+ 13 + 8*i];
+	    int jumpOffset = (int)ClassParser::readU4(p);
+	    int jumpTo = k + jumpOffset;
+	    *this->_codeStrStream << "       cmpq $" << caseNumber << ", %" << reg <<"\n";
+	    *this->_codeStrStream << "       je offset_" << std::dec << jumpTo << "\n";
+	    
+	  }
+	  
+	  //jump to default
+	  *this->_codeStrStream << "       jmp offset_" << std::dec << k + defaultOffset << "\n";
         }
         break;
 
@@ -1342,9 +1450,17 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_invokevirtual:{
     	    *this->_codeStrStream << "";
 			*this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
+            if (doubletest){
+                *this->_codeStrStream << "      #double test\n";
+                *this->_codeStrStream << "       mov    $0x" << std::hex
+		  						  << (unsigned long) simplePrintfD << ",%rax" << "\n";
+            } else {
+			*this->_codeStrStream << "      mov %rbx,%rdi\n";
 			*this->_codeStrStream << "       mov    $0x" << std::hex
-		  						  << (unsigned long) simplePrintf << ",%rax" << "\n";
+		  						  << (unsigned long) simplePrintfD << ",%rax" << "\n";
+            }
 			*this->_codeStrStream << "       call   *%rax\n";
+            doubletest = false;
 			//notImplemented(code);
         }
         break;
@@ -1468,6 +1584,8 @@ ByteCodeGen_X86_64::notImplemented(ByteCode::Code code)
 		fprintf(stderr, "ByteCodeGen_X86_64:Not implemented \"%s\"\n", ByteCode::_name[code]);
 	}
 }
+
+
 
 
 
