@@ -5,7 +5,7 @@ class Add {
 		int l = 15;
 		int k = i + j;
 		if (l == k){
-		  System.out.println("Equal\n");
+		  System.out.println("Equal");
 		}
 		
 	}
