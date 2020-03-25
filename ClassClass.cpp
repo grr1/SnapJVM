@@ -19,6 +19,14 @@ ClassClass::~ClassClass() {
 
 int
 ClassClass::runMain(int argc, char **argv) {
+
+    Method * clinit = lookupMethod("<clinit>");
+    if (clinit != nullptr) {
+        fprintf(stderr, "Got a non-null ptr\n");
+        void * (*fptr)(int, char**) = (void * (*)(int, char **))clinit->_code;
+        (*fptr)(argc, argv);
+    }
+
 	Method * method = lookupMethod("main");
 	if (method ==NULL) {
 		fprintf(stderr, "Class does not have \"main\" method");
@@ -33,6 +41,7 @@ ClassClass::runMain(int argc, char **argv) {
 Method *
 ClassClass::lookupMethod(const char * methodName)
 {
+	printf("in looking for: %s\n", methodName);
 	for(int i =0; i<this->_methods_count; i++) {
 		Method * method = &this->_methodsArray[i];
 		if (!strcmp(method->_methodName, methodName)) {
