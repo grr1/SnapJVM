@@ -19,7 +19,7 @@ void printUsage(char * argv0)
     fprintf(stderr, "    -c - Print class information\n");
     fprintf(stderr, "    -n - Don't execute\n");
     fprintf(stderr, "    -v - Verbose mode\n");
-    fprintf(stderr, "Optiones:\n");
+    fprintf(stderr, "    -t - Test mode (selectively verbose for unimplemented opcodes)\n");
 }
 
 int main(int argc, char **argv) {
@@ -29,10 +29,11 @@ int main(int argc, char **argv) {
     bool printClassInfo = false;
     bool executeMain = true;
     SnapJVMRuntime::setVerboseMode(false);
+    SnapJVMRuntime::setTestMode(false);
 
     SnapJVMRuntime::_theJVMRuntime = new SnapJVMRuntime();
 
-    while ((opt = getopt(argc, argv, "cnv")) != -1) {
+    while ((opt = getopt(argc, argv, "cnvt")) != -1) {
         switch (opt) {
         case 'c':
         	printClassInfo = true;
@@ -42,6 +43,9 @@ int main(int argc, char **argv) {
 			break;
         case 'v':
         	SnapJVMRuntime::setVerboseMode(true);
+			break;
+        case 't':
+		SnapJVMRuntime::setTestMode(true);
 			break;
         default: /* '?' */
             fprintf(stderr, "Usage: %s [-c] classFile\n", argv[0]);

@@ -27,6 +27,7 @@ class SnapJVMRuntime {
 	InvokeJVMRuntimeFuncPtr _runtimeDispatchTable[JVMRuntime_max];
 
 	static bool _verboseMode;
+	static bool _testMode;
 
 	///////////////////////////////////////////
 
@@ -40,6 +41,8 @@ public:
 	void invokeMethod( Object * o, char * methodName );
 	static void setVerboseMode(bool verboseMode);
 	static bool isVerboseMode();
+	static void setTestMode(bool testMode);
+	static bool isTestMode();
 
 	// Calls runtime
 	static void * runtime_invokevirtual(SnapJVMRuntime * runTime, Object * o, void *a, void *b, void *c, void *d);
@@ -60,6 +63,16 @@ inline bool
 SnapJVMRuntime::isVerboseMode()
 {
 	return _verboseMode;
+}
+
+inline void
+SnapJVMRuntime::setTestMode(bool testMode) {
+	_testMode = testMode;
+}
+
+inline bool
+SnapJVMRuntime::isTestMode() {
+	return _testMode;
 }
 
 #endif /* SNAPJVMRUNTIME_HPP_ */
