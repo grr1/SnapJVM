@@ -12,6 +12,8 @@ class Method;
 
 #include "ByteCode.hpp"
 #include "ClassParser.hpp"
+#include <map>
+#include <string.h>
 
 class ConstantPoolInfo;
 typedef ConstantPoolInfo * ConstantPoolInfoPtr;
@@ -57,6 +59,15 @@ public:
 	int nMethods;
 	Method * _methodsArray;
 
+	//Map for all static variables
+	std::map <u2, u8*> _staticVars;
+
+	//Map for all instance variables
+	std::map <u2, u8*> _instanceVars;
+
+	//Map for all class methods
+    std::map <u2, Method> _classMethods;
+
 public:
 	ClassClass();
 	virtual ~ClassClass();
@@ -70,6 +81,9 @@ public:
 	void printFlags(u2 flags);
 	int runMain(int argc, char **argv);
 	Method * lookupMethod(const char * methodName);
+	u8 getField(u2);
+	u2 getFieldName(u2);
+	void addField(u2, u8);
 };
 
 
@@ -124,6 +138,7 @@ public:
 
 class CONSTANT_Fieldref_info : public ConstantPoolInfo {
 public:
+    u2 field_index; //Not specified in the JVM, contains the index of this element in the constant pool
 	u2 class_index;
     u2 name_and_type_index;
     void print(ClassClass * classClass) {

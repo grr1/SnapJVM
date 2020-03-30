@@ -171,6 +171,7 @@ ClassParser::parseConstantPool()
 			/*
 			 * CONSTANT_Fieldref_info {
 				u1 tag;
+			    u2 fieldIndex;
 				u2 class_index;
 				u2 name_and_type_index;
 			}
@@ -180,6 +181,7 @@ ClassParser::parseConstantPool()
 				cpInfo = c;
 				c->class_index = readU2();
 				c->name_and_type_index = readU2();
+				fieldCPIs.push_back(indexID);
 				break;
 			}
 
@@ -413,9 +415,31 @@ ClassParser::parseFields()
 		}
 	*/
 
+	/*
+	 * This code loop is necessary because fieldCPIs contains
+	 * the constant pool index of every field in the constantPool
+	 * but the fields_count only contains the fields defined in this
+	 * class.
+	 *
+	 * Removes all of the field references whose class name begins with java
+	 */
+
+	int limit = fieldCPIs.size();
+	for (int i = 0; i < limit; i++){
+	    int fieldIndex = fieldCPIs.front();
+	    fieldCPIs.pop_front();
+	    CONSTANT_Fieldref_info * fieldrefInfo = (CONSTANT_Fieldref_info *) _classClass->_constantPoolInfoArray[fieldIndex];
+	    CONSTANT_Class_info * fieldClassInfo = (CONSTANT_Class_info *)_classClass->_constantPoolInfoArray[fieldrefInfo->class_index];
+	    CONSTANT_String_info * fieldClassNameInfo = (CONSTANT_String_info *) _classClass->_constantPoolInfoArray[fieldClassInfo->name_index];
+	    char * className = (char *) fieldClassNameInfo->toData(_classClass);
+	    if (strncmp(className, "java", 4) != 0){
+	        fieldCPIs.push_back(fieldIndex);
+	    }
+
+	}
+
 	_classClass->_fields_count = readU2();
 	_classClass->_fieldsArray = new FieldInfoPtr[_classClass->_fields_count];
-
 	for (int i = 0; i < _classClass->_fields_count; i++) {
 		FieldInfo * fieldInfo = new FieldInfo;
 		_classClass->_fieldsArray[i] = fieldInfo;
@@ -434,6 +458,13 @@ ClassParser::parseFields()
 				attributeInfo->infoArray[k] = readU1();
 			}
 		}
+		//Add Field to the appropriate map
+        if ((fieldInfo->access_flags & 0x0008) == 0x0008){
+            _classClass->_staticVars[fieldCPIs.front()] = (u8 *) malloc(sizeof(u8));
+        } else{
+            _classClass->_instanceVars[fieldCPIs.front()] = (u8*) malloc(sizeof(u8));
+        }
+        if (fieldCPIs.size() > 0) fieldCPIs.pop_front();
 	}
 	return true;
 }

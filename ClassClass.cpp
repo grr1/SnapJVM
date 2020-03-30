@@ -7,7 +7,6 @@
 
 #include "ClassClass.hpp"
 #include "Method.hpp"
-#include <string.h>
 
 ClassClass::ClassClass() {
 
@@ -19,7 +18,14 @@ ClassClass::~ClassClass() {
 }
 
 int
-ClassClass::runMain(int argc, char **argv) {\
+ClassClass::runMain(int argc, char **argv) {
+
+    Method * clinit = lookupMethod("<clinit>");
+    if (clinit != nullptr) {
+        void * (*fptr)(int, char**) = (void * (*)(int, char **))clinit->_code;
+        (*fptr)(argc, argv);
+    }
+
 	Method * method = lookupMethod("main");
 	if (method ==NULL) {
 		fprintf(stderr, "Class does not have \"main\" method");
@@ -188,6 +194,16 @@ ClassClass::printFlags(u2 flags) {
 		printf(" flags=0x%x\n", flags);
 	//}
 
+}
+
+u8
+ClassClass::getField(u2 fieldCPI){
+	return *_staticVars[fieldCPI];
+}
+
+void
+ClassClass::addField(u2 fieldCPI, u8 value){
+	*_staticVars[fieldCPI] = value;
 }
 
 void
