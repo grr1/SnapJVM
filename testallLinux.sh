@@ -74,5 +74,6 @@ done
 
 echo "`cat ./$TEST_OUT_FOLDER/$TESTS_PASSED` tests passed"
 echo "`cat ./$TEST_OUT_FOLDER/$TESTS_FAILED` tests failed"
-rm ./$TEST_OUT_FOLDER/$TESTS_PASSED
-rm ./$TEST_OUT_FOLDER/$TESTS_FAILED
+rm ./$TEST_OUT_FOLDER/*
+rm ./$TEST_FOLDER/*
+
