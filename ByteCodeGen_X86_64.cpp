@@ -1265,7 +1265,6 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         CONSTANT_Utf8_info *staticFieldName = (CONSTANT_Utf8_info *) _classClass->_constantPoolInfoArray[staticFieldNaT->name_index];
         if (strcmp((char *) staticFieldName->bytesArray, "out") == 0) {
             notImplemented(code);
-            fprintf(stderr, "Detected calling getstatic on library class, got: %s\n", staticFieldName->bytesArray);
         }
             //if (strcmpstaticFieldName.bytesArray)
 

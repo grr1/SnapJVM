@@ -434,7 +434,6 @@ ClassParser::parseFields()
 	    char * className = (char *) fieldClassNameInfo->toData(_classClass);
 	    if (strncmp(className, "java", 4) != 0){
 	        fieldCPIs.push_back(fieldIndex);
-            printf("pushed fieldIndex: %d back onto the fieldCPIs\n", fieldIndex);
 	    }
 
 	}
@@ -462,12 +461,9 @@ ClassParser::parseFields()
 		//Add Field to the appropriate map
         if ((fieldInfo->access_flags & 0x0008) == 0x0008){
             _classClass->_staticVars[fieldCPIs.front()] = (u8 *) malloc(sizeof(u8));
-            dprintf(2, "Malloced at address %p, stored at _staticVars[%d]\n", _classClass->_staticVars[fieldCPIs.front()], fieldCPIs.front());
         } else{
             _classClass->_instanceVars[fieldCPIs.front()] = (u8*) malloc(sizeof(u8));
-            dprintf(2, "Malloced at address %p, stored at _instanceVars[%d]\n", _classClass->_instanceVars[fieldCPIs.front()], fieldCPIs.front());
         }
-            dprintf(2, "%d\n", fieldCPIs.front());
         if (fieldCPIs.size() > 0) fieldCPIs.pop_front();
 	}
 	return true;
