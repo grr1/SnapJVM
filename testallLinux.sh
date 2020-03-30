@@ -1,39 +1,78 @@
 #!/bin/bash
 
-export CLASSFILES="Hello Loop Compare"
-export EXPERIMENTALFILES="Add Increment staticTest"
+# checking working directory
+if [ "SnapJVM" != "${PWD##*/}" ] ; then
+	echo "Please run this testall from the SnapJVM directory directly"
+	exit -1
+fi
 
-echo ========== TESTALL SNAPJVM =============
+# may change these to specify location of tests cases/output
+TEST_FOLDER="test"
+TEST_OUT_FOLDER="test_out"
+TEST_SRC_FOLDER="test_src"
+TESTS_PASSED="tests_passed"
+TESTS_FAILED="tests_failed"
 
-echo 0 > test/tests_passed
-echo 0 > test/tests_failed
+# to keep count of success rate
+echo 0 > ./$TEST_OUT_FOLDER/$TESTS_PASSED
+echo 0 > ./$TEST_OUT_FOLDER/$TESTS_FAILED
 
-for test in $CLASSFILES; do
-(	
-	echo ------ Running $test --------- 
-	cd test;
-	rm -f $test.java.out $test.snap-jvm.out
-	rm -f $test.class
-	javac $test.java
-        java $test > $test.java.out
-	../snap-jvm $test  > $test.snap-jvm.out
-	diff $test.java.out $test.snap-jvm.out
-	if [ $? -eq 0 ] 
-        then
-		echo ">>>>> Test " $t passed;
-		tests_passed=`cat tests_passed`
-		tests_passed=`expr $tests_passed + 1`
-		echo $tests_passed > tests_passed
-	else
-		echo "***** Test " $t failed;
-		tests_failed=`cat tests_failed`
-		tests_failed=`expr $tests_failed + 1`
-		echo $tests_failed > tests_failed
-	fi 
+echo -e "\033[33m========== TESTALL SNAPJVM =============\033[0m"
+
+for test_file in $(ls ./$TEST_SRC_FOLDER/${1%.*}) ; do
+(
+    if [[ "${test_file: -5}" == ".java" ]] ; then
+		echo -e "\033[33m***** Compiling ${test_file::-5}\033[0m"
+	        javac -d ./$TEST_FOLDER ./$TEST_SRC_FOLDER/${test_file}
+		continue
+	fi
 )
-done; 
+done
 
-echo
-echo `cat test/tests_passed` tests passed
-echo `cat test/tests_failed` tests failed
-echo
+# all filenames (without extensions) in the test directory
+for test_file in $(ls ./$TEST_FOLDER/${1%.*}) ; do
+(
+	# check for ".java" suffix
+	if [[ "${test_file: -5}" == ".java" ]] ; then
+		echo "-----"
+		echo -e "\033[31mERROR: .java files belong in test_src\033[0m"
+		echo -e "Move \033[35m$test_file\033[0m to ./$TEST_SRC_FOLDER/, compile, and move the .class file to ./$TEST_FOLDER/"
+		continue
+	fi
+
+	# remove ".class" suffix from end of filename
+	test_name=${test_file::-6}
+	echo -e "------ \033[33mRunning $test_name\033[0m ---------"
+
+	# remove old output
+	rm -f ./$TEST_OUT_FOLDER/$test_name.java.out ./$TEST_OUT_FOLDER/$test_name.snap-jvm.out
+	cd ./$TEST_FOLDER/
+
+	# generated expected output
+	java $test_name > ../$TEST_OUT_FOLDER/$test_name.java.out
+
+	# generate snap-jvm output, printing when an opcode is unimplemented
+	# NOTE: `snap-jvm` expects "filename" instead of "filename.class"
+	../snap-jvm -t $test_name 1> ../$TEST_OUT_FOLDER/$test_name.snap-jvm.out
+
+	# compare output, then make decision based on exit status of `diff`
+	cd ../$TEST_OUT_FOLDER/
+	diff ./$test_name.java.out ./$test_name.snap-jvm.out
+	if [ $? -eq 0 ] ; then
+		echo -e "\033[33m***** Test \033[35m$test_name \033[32mPASSED\033[0m"
+		passed=`cat ./$TESTS_PASSED`
+		passed=$((passed + 1))
+		echo $passed > ./$TESTS_PASSED
+	else
+		echo -e "\033[33m***** Test \033[35m$test_name \033[31mFAILED\033[0m"
+		failed=`cat ./$TESTS_FAILED`
+		failed=$((failed + 1))
+		echo $failed > ./$TESTS_FAILED
+	fi
+)
+done
+
+echo "`cat ./$TEST_OUT_FOLDER/$TESTS_PASSED` tests passed"
+echo "`cat ./$TEST_OUT_FOLDER/$TESTS_FAILED` tests failed"
+rm ./$TEST_OUT_FOLDER/$TESTS_PASSED
+rm ./$TEST_OUT_FOLDER/$TESTS_FAILED
