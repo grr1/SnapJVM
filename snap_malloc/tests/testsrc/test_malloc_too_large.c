@@ -8,7 +8,7 @@ int main() {
   initialize_test(__FILE__);
 
   printf("Mallocing larger than the maximum possible allocation\n");
-  void * ptr = my_malloc(ARENA_SIZE - 3 * sizeof(header) + 1);
+  void * ptr = mHeap->my_malloc(mHeap->arena_size - 3 * sizeof(MallocHeap::Header) + 1);
 
   fflush(stdout);
   if (ptr == NULL) {
@@ -19,8 +19,8 @@ int main() {
   puts("");
 
   printf("Verify that malloc still works after invalid request\n");
-  void * ptr2 = mallocing(8, print_status, false);
-  freeing(ptr2, 8, print_status, false);
+  void * ptr2 = mallocing(8, mPrinter->print_status, false);
+  freeing(ptr2, 8, mPrinter->print_status, false);
 
   finalize_test();
 }

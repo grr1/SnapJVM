@@ -5,9 +5,9 @@
 int main() {
   initialize_test(__FILE__);
 
-  void * ptr = mallocing(8, print_status, false);
+  void * ptr = mallocing(8, mPrinter->print_status, false);
   strcpy((char *) ptr - 8, "Invalid write");
-  freeing(ptr, 8, print_status, false);
+  freeing(ptr, 8, mPrinter->print_status, false);
 
   finalize_test();
 }

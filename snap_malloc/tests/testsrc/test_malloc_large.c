@@ -6,9 +6,9 @@ int main() {
   initialize_test(__FILE__);
 
   void * ptrs[NALLOCS];
-  mallocing_loop(ptrs, 16384, NALLOCS, print_status, false);
+  mallocing_loop(ptrs, 16384, NALLOCS, mPrinter->print_status, false);
 
-  tags_print(print_object);
+  mPrinter->tags_print(mHeap, mPrinter->print_object);
 
   finalize_test();
 }

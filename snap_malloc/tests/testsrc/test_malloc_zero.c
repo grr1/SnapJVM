@@ -7,9 +7,9 @@
 int main() {
   initialize_test(__FILE__);
 
-  void * ptr = mallocing(0, print_status, false);
-  void * ptr2 = mallocing(8, print_status, false);
-  freeing(ptr2, 8, print_status, false);
+  void * ptr = mallocing(0, mPrinter->print_status, false);
+  void * ptr2 = mallocing(8, mPrinter->print_status, false);
+  freeing(ptr2, 8, mPrinter->print_status, false);
   if (ptr == NULL) {
     printf("SUCCESS\n");
   } else {

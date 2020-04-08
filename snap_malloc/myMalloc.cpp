@@ -13,39 +13,35 @@
 /* Due to the way assert() prints error messges we use out own assert function
  * for deteminism when testing assertions
  */
-#ifdef TEST_ASSERT
-  inline static void assert(int e) {
-    if (!e) {
-      fprintf(stderr, "Assertion Failed!\n");
-      exit(1);
-    }
+inline void MallocHeap::mAssert(int e) {
+  if (!e) {
+    fprintf(stderr, "Assertion Failed!\n");
+    exit(1);
   }
-#else
-  #include <assert.h>
-#endif
+}
 
 // Helper functions for getting and storing size and state from Header
 // Since the size is a multiple of 8, the last 3 bits are always 0s.
 // Therefore we use the 3 lowest bits to store the state of the object.
 // This is going to save 8 bytes in all objects.
 
-inline size_t MallocHeap::get_block_size(Header * h) {
+inline std::size_t MallocHeap::get_block_size(MallocHeap::Header * h) {
      return h->size_and_state & ~0x3;
 }
 
-inline void MallocHeap::set_block_size(Header * h, size_t size) {
+inline void MallocHeap::set_block_size(MallocHeap::Header * h, std::size_t size) {
      h->size_and_state = size | (h->size_and_state & 0x3);
 }
 
-inline enum MallocHeap::state MallocHeap::get_block_state(Header *h) {
+inline enum MallocHeap::state MallocHeap::get_block_state(MallocHeap::Header *h) {
      return (enum state) (h->size_and_state & 0x3);
 }
 
-inline void MallocHeap::set_block_state(Header * h, enum state s) {
+inline void MallocHeap::set_block_state(MallocHeap::Header * h, enum state s) {
      h->size_and_state = (h->size_and_state & ~0x3) | s;
 }
 
-inline void MallocHeap::set_block_size_and_state(Header * h, size_t size, enum state s) {
+inline void MallocHeap::set_block_size_and_state(MallocHeap::Header * h, std::size_t size, enum state s) {
      h->size_and_state=(size & ~0x3)|(s &0x3);
 }
 
@@ -54,7 +50,7 @@ inline void MallocHeap::set_block_size_and_state(Header * h, size_t size, enum s
  *
  * @param i The bit to set
  */
-inline void MallocHeap::set_bit(size_t i) {
+inline void MallocHeap::set_bit(std::size_t i) {
   freelist_bitmap[i >> 3] |= (1 << (i & 7));
 }
 
@@ -63,7 +59,7 @@ inline void MallocHeap::set_bit(size_t i) {
  *
  * @param i The bit to unset
  */
-inline void MallocHeap::unset_bit(size_t i) {
+inline void MallocHeap::unset_bit(std::size_t i) {
   freelist_bitmap[i >> 3] &= ~(1 << (i & 7));
 }
 
@@ -72,7 +68,7 @@ inline void MallocHeap::unset_bit(size_t i) {
  *
  * @param i The bit to get
  */
-inline bool MallocHeap::get_bit(size_t i) {
+inline bool MallocHeap::get_bit(std::size_t i) {
   return (freelist_bitmap[i >> 3] >> (i & 7)) & 1;
 }
 
@@ -83,8 +79,8 @@ inline bool MallocHeap::get_bit(size_t i) {
  *
  * @return The index of the first bit satisfying the requirements
  */
-inline size_t MallocHeap::get_next_set_bit(size_t i) {
-  for (;i < N_LISTS - 1; i++) {
+inline std::size_t MallocHeap::get_next_set_bit(std::size_t i) {
+  for (;i < n_lists - 1; i++) {
     if (get_bit(i)) {
       return i;
     }
@@ -99,9 +95,9 @@ inline size_t MallocHeap::get_next_set_bit(size_t i) {
  *
  * @return The index of the freelist corrospoding to a request of size size
  */
-inline size_t MallocHeap::size_to_index(size_t size) {
-  size_t i = ((size - ALLOC_HEADER_SIZE /*sizeof(Header)*/) >> 3) - 1;
-  return i >= N_LISTS ? N_LISTS - 1 : i;
+inline std::size_t MallocHeap::size_to_index(std::size_t size) {
+  std::size_t i = ((size - getAllocHeaderSize() /*sizeof(MallocHeap::Header)*/) >> 3) - 1;
+  return i >= n_lists ? n_lists - 1 : i;
 }
 
 /**
@@ -114,7 +110,7 @@ inline size_t MallocHeap::size_to_index(size_t size) {
  * @return a pointer to a Header offset bytes from pointer
  */
 inline MallocHeap::Header * MallocHeap::get_header_from_offset(void * ptr, ptrdiff_t off) {
-  return (Header *)((char *) ptr + off);
+  return (MallocHeap::Header *)((char *) ptr + off);
 }
 
 /**
@@ -124,7 +120,7 @@ inline MallocHeap::Header * MallocHeap::get_header_from_offset(void * ptr, ptrdi
  *
  * @return Header to the right of h
  */
-MallocHeap::Header * MallocHeap::get_right_header(Header * h) {
+MallocHeap::Header * MallocHeap::get_right_header(MallocHeap::Header * h) {
 	return get_header_from_offset(h, get_block_size(h));
 }
 
@@ -135,7 +131,7 @@ MallocHeap::Header * MallocHeap::get_right_header(Header * h) {
  *
  * @return Header to the right of h
  */
-inline MallocHeap::Header * MallocHeap::get_left_header(Header * h) {
+inline MallocHeap::Header * MallocHeap::get_left_header(MallocHeap::Header * h) {
   return get_header_from_offset(h, -h->left_size);
 }
 
@@ -146,9 +142,9 @@ inline MallocHeap::Header * MallocHeap::get_left_header(Header * h) {
  * @param fp a pointer to the Header being used as a fencepost
  * @param left_size the size of the object to the left of the fencepost
  */
-inline void MallocHeap::initialize_fencepost(Header * fp, size_t left_size) {
-	set_block_state(fp, FENCEPOST);
-	set_block_size(fp,ALLOC_HEADER_SIZE);// sizeof(Header));
+inline void MallocHeap::initialize_fencepost(MallocHeap::Header * fp, std::size_t left_size) {
+	set_block_state(fp, state_fencepost);
+	set_block_size(fp,getAllocHeaderSize());// sizeof(MallocHeap::Header));
 	fp->left_size = left_size;
 }
 
@@ -157,7 +153,7 @@ inline void MallocHeap::initialize_fencepost(Header * fp, size_t left_size) {
  *
  * @param hdr the first fencepost in the chunk allocated by the OS
  */
-inline void MallocHeap::insert_os_chunk(Header * hdr) {
+inline void MallocHeap::insert_os_chunk(MallocHeap::Header * hdr) {
   osChunkList[numOsChunks++] = hdr;
 }
 
@@ -169,20 +165,20 @@ inline void MallocHeap::insert_os_chunk(Header * hdr) {
  * @param raw_mem a void pointer to the memory chunk to initialize
  * @param size the size of the allocated chunk
  */
-inline void MallocHeap::insert_fenceposts(void * raw_mem, size_t size) {
+inline void MallocHeap::insert_fenceposts(void * raw_mem, std::size_t size) {
   // Convert to char * before performing operations
   char * mem = (char *) raw_mem;
 
   // Insert a fencepost at the left edge of the block
-  Header * leftFencePost = (Header *) mem;
-  initialize_fencepost(leftFencePost, ALLOC_HEADER_SIZE);
+  MallocHeap::Header * leftFencePost = (MallocHeap::Header *) mem;
+  initialize_fencepost(leftFencePost, getAllocHeaderSize());
 
   // Maintain list of chunks for debugging
   //insert_os_chunk(leftFencePost);
 
   // Insert a fencepost at the right edge of the block
-  Header * rightFencePost = get_header_from_offset(mem, size - ALLOC_HEADER_SIZE); //sizeof(Header));
-  initialize_fencepost(rightFencePost, size - 2 * ALLOC_HEADER_SIZE); //sizeof(Header));
+  MallocHeap::Header * rightFencePost = get_header_from_offset(mem, size - getAllocHeaderSize()); //sizeof(MallocHeap::Header));
+  initialize_fencepost(rightFencePost, size - 2 * getAllocHeaderSize()); //sizeof(MallocHeap::Header));
 }
 
 /**
@@ -194,17 +190,17 @@ inline void MallocHeap::insert_fenceposts(void * raw_mem, size_t size) {
  * @return A pointer to the allocable block in the chunk (just after the
  * first fencpost)
  */
-MallocHeap::Header * MallocHeap::allocate_chunk(size_t size) {
+MallocHeap::Header * MallocHeap::allocate_chunk(std::size_t size) {
   void * mem = sbrk(size);
   if (mem == (void *) -1) {
     return NULL;
   }
 
   insert_fenceposts(mem, size);
-  Header * hdr = (Header *) ((char *)mem + ALLOC_HEADER_SIZE); //sizeof(Header));
-  set_block_state(hdr, UNALLOCATED);
-  set_block_size(hdr,size - 2 * ALLOC_HEADER_SIZE); //sizeof(Header));
-  hdr->left_size = ALLOC_HEADER_SIZE; //sizeof(Header);
+  MallocHeap::Header * hdr = (MallocHeap::Header *) ((char *)mem + getAllocHeaderSize()); //sizeof(MallocHeap::Header));
+  set_block_state(hdr, state_unallocated);
+  set_block_size(hdr,size - 2 * getAllocHeaderSize()); //sizeof(MallocHeap::Header));
+  hdr->left_size = getAllocHeaderSize(); //sizeof(MallocHeap::Header);
   return hdr;
 }
 
@@ -216,11 +212,11 @@ MallocHeap::Header * MallocHeap::allocate_chunk(size_t size) {
  *
  * @return The sentinel of the list corrosponding to the allocation size
  */
-MallocHeap::Header * MallocHeap::get_freelist_sentinel(size_t size) {
+MallocHeap::Header * MallocHeap::get_freelist_sentinel(std::size_t size) {
   // Calculate list index
-  size_t i = (((size | 7) - ALLOC_HEADER_SIZE /*sizeof(Header)*/) >> 3);
+  std::size_t i = (((size | 7) - getAllocHeaderSize() /*sizeof(MallocHeap::Header)*/) >> 3);
   // Truncate list index to largest available list
-  i = i >= N_LISTS ? N_LISTS - 1 : i - 1;
+  i = i >= n_lists ? n_lists - 1 : i - 1;
   // Return list
   return &freelistSentinels[i];
 }
@@ -232,7 +228,7 @@ MallocHeap::Header * MallocHeap::get_freelist_sentinel(size_t size) {
  *
  * @return The sentinel which best fits the allocation request
  */
-MallocHeap::Header * MallocHeap::get_populated_freelist_sentinel(size_t size) {
+MallocHeap::Header * MallocHeap::get_populated_freelist_sentinel(std::size_t size) {
   return &freelistSentinels[get_next_set_bit(size_to_index(size))];
 }
 
@@ -245,11 +241,11 @@ MallocHeap::Header * MallocHeap::get_populated_freelist_sentinel(size_t size) {
  *
  * @return a pointer to the allocated region of the block
  */
-inline MallocHeap::Header * MallocHeap::split_block(Header * block, size_t size) {
-  Header * remainder = block;
-  size_t oldSize = get_block_size(remainder);
-  Header * right = get_header_from_offset(block, get_block_size(block));
-  Header * ret = get_header_from_offset(block, get_block_size(block) - size);
+inline MallocHeap::Header * MallocHeap::split_block(MallocHeap::Header * block, std::size_t size) {
+  MallocHeap::Header * remainder = block;
+  std::size_t oldSize = get_block_size(remainder);
+  MallocHeap::Header * right = get_header_from_offset(block, get_block_size(block));
+  MallocHeap::Header * ret = get_header_from_offset(block, get_block_size(block) - size);
 
   // Update the remainder's size fields
   set_block_size(remainder, get_block_size(block) - size);
@@ -271,10 +267,10 @@ inline MallocHeap::Header * MallocHeap::split_block(Header * block, size_t size)
  *
  * @param block block to remove
  */
-inline void MallocHeap::freelist_remove(Header * block) {
+inline void MallocHeap::freelist_remove(MallocHeap::Header * block) {
   // If the final node in the given freelist then update the bitmap
   if (block->next->next == block) {
-    size_t index = ((size_t)block->next - (size_t)freelistSentinels) / sizeof(Header);
+    std::size_t index = ((std::size_t)block->next - (std::size_t)freelistSentinels) / sizeof(MallocHeap::Header);
     unset_bit(index);
   }
   block->prev->next = block->next;
@@ -288,8 +284,8 @@ inline void MallocHeap::freelist_remove(Header * block) {
  * @param prev block previous to the block to insert
  * @param next block after the block to insert
  */
-inline void MallocHeap::freelist_insert_between(Header * block, Header * prev,
-                                           Header * next) {
+inline void MallocHeap::freelist_insert_between(MallocHeap::Header * block, MallocHeap::Header * prev,
+                                           MallocHeap::Header * next) {
   block->next = next;
   block->prev = prev;
   next->prev = block;
@@ -301,9 +297,9 @@ inline void MallocHeap::freelist_insert_between(Header * block, Header * prev,
  *
  * @param block block to insert
  */
-inline void MallocHeap::freelist_insert(Header * block) {
+inline void MallocHeap::freelist_insert(MallocHeap::Header * block) {
 	set_bit(size_to_index(get_block_size(block)));
-	Header * freelist = get_freelist_sentinel(get_block_size(block));
+	MallocHeap::Header * freelist = get_freelist_sentinel(get_block_size(block));
 	freelist_insert_between(block, freelist, freelist->next);
 }
 
@@ -315,12 +311,12 @@ inline void MallocHeap::freelist_insert(Header * block) {
  *
  * @return A block satisfying the request or NULL if no such block could be found
  */
-inline MallocHeap::Header * MallocHeap::free_list_get_allocable(size_t size) {
-  Header * freelist = get_populated_freelist_sentinel(size);
+inline MallocHeap::Header * MallocHeap::free_list_get_allocable(std::size_t size) {
+  MallocHeap::Header * freelist = get_populated_freelist_sentinel(size);
 
-  for (Header * cur = freelist->next; cur != freelist; cur = cur->next) {
+  for (MallocHeap::Header * cur = freelist->next; cur != freelist; cur = cur->next) {
 	  if (get_block_size(cur) >= size) {
-		  if (get_block_size(cur) >= size + sizeof(Header)) {
+		  if (get_block_size(cur) >= size + sizeof(MallocHeap::Header)) {
 			  return split_block(cur, size);
 		  } else {
 			  freelist_remove(cur);
@@ -338,46 +334,46 @@ inline MallocHeap::Header * MallocHeap::free_list_get_allocable(size_t size) {
  *
  * @return A block satisfying the user's request
  */
-inline MallocHeap::Header * MallocHeap::allocate_object(size_t raw_size) {
+inline MallocHeap::Header * MallocHeap::allocate_object(std::size_t raw_size) {
   if (raw_size == 0) {
     return NULL;
   }
 
-  size_t size = (raw_size + ALLOC_HEADER_SIZE + 7) & ~7; //sizeof(Header) + 7) & ~7;
-  if (size < sizeof(Header)) {
-    size = sizeof(Header);
+  std::size_t size = (raw_size + getAllocHeaderSize() + 7) & ~7; //sizeof(MallocHeap::Header) + 7) & ~7;
+  if (size < sizeof(MallocHeap::Header)) {
+    size = sizeof(MallocHeap::Header);
   }
 
   // First try
-  Header * h = free_list_get_allocable(size);
+  MallocHeap::Header * h = free_list_get_allocable(size);
   if (h != NULL) {
     return h;
   }
 
   while(h == NULL) {
     // Allocate more memory
-    Header * newChunk = allocate_chunk(ARENA_SIZE);
+    MallocHeap::Header * newChunk = allocate_chunk(arena_size);
     if (newChunk == NULL) {
       return NULL;
     }
 
     /* Check if next to another chunk from the OS */
-    Header * prevFencePost = get_header_from_offset(newChunk, 2 * -ALLOC_HEADER_SIZE);
-    Header * rfp = get_header_from_offset(newChunk, get_block_size(newChunk));
+    MallocHeap::Header * prevFencePost = get_header_from_offset(newChunk, 2 * -getAllocHeaderSize());
+    MallocHeap::Header * rfp = get_header_from_offset(newChunk, get_block_size(newChunk));
     if (prevFencePost == lastFencePost) {
       // Move Header to fencepost
-	    set_block_size(prevFencePost, get_block_size(newChunk) + 2 * ALLOC_HEADER_SIZE);
+	    set_block_size(prevFencePost, get_block_size(newChunk) + 2 * getAllocHeaderSize());
 
       // Update left size of the right fencepost
 	    rfp->left_size = get_block_size(prevFencePost);
 
       // Free node to coalesce
-	    set_block_state(prevFencePost, UNALLOCATED);
+	    set_block_state(prevFencePost, state_unallocated);
       free_list_deallocate(prevFencePost);
     } else {
       // Insert chunk
       freelist_insert(newChunk);
-      insert_os_chunk(get_header_from_offset(newChunk, -ALLOC_HEADER_SIZE));
+      insert_os_chunk(get_header_from_offset(newChunk, -getAllocHeaderSize()));
     }
     lastFencePost = rfp;
 
@@ -396,12 +392,12 @@ inline MallocHeap::Header * MallocHeap::allocate_object(size_t raw_size) {
  * @return A pointer to the Header of the block
  */
 inline MallocHeap::Header * MallocHeap::ptr_to_header(void * p) {
-  return (Header *)((char *) p - ALLOC_HEADER_SIZE); //sizeof(Header));
+  return (MallocHeap::Header *)((char *) p - getAllocHeaderSize()); //sizeof(MallocHeap::Header));
 }
 
-inline void MallocHeap::move_coalesced(Header * block, size_t oldSize) {
+inline void MallocHeap::move_coalesced(MallocHeap::Header * block, std::size_t oldSize) {
 	if ((get_block_size(block) >> 3 != oldSize >> 3) &&
-	    ((get_block_size(block) >> 3 < N_LISTS) || (oldSize >> 3 < N_LISTS))) {
+	    ((get_block_size(block) >> 3 < n_lists) || (oldSize >> 3 < n_lists))) {
     // Change lists
     freelist_remove(block);
     freelist_insert(block);
@@ -415,8 +411,8 @@ inline void MallocHeap::move_coalesced(Header * block, size_t oldSize) {
  * @param block The block being freed
  * @param right The block to the right of the block being freed
  */
-inline void MallocHeap::coalesce_left(Header * left, Header * block, Header * right) {
-	size_t oldSize = get_block_size(left);
+inline void MallocHeap::coalesce_left(MallocHeap::Header * left, MallocHeap::Header * block, MallocHeap::Header * right) {
+	std::size_t oldSize = get_block_size(left);
 
   // Update sizes
 	set_block_size(left, get_block_size(left) + get_block_size(block));
@@ -433,9 +429,9 @@ inline void MallocHeap::coalesce_left(Header * left, Header * block, Header * ri
  * @param block The block being freed
  * @param right The block to the right of the block being freed
  */
-inline void MallocHeap::coalesce_right(Header * block, Header * right) {
-  Header * rightRight = get_right_header(right);
-  size_t oldSize = get_block_size(right);
+inline void MallocHeap::coalesce_right(MallocHeap::Header * block, MallocHeap::Header * right) {
+  MallocHeap::Header * rightRight = get_right_header(right);
+  std::size_t oldSize = get_block_size(right);
 
   // Update sizes
   set_block_size(block, get_block_size(block)+get_block_size(right));
@@ -458,9 +454,9 @@ inline void MallocHeap::coalesce_right(Header * block, Header * right) {
  * @param block The block being freed
  * @param right The block to the right of the block being freed
  */
-inline void MallocHeap::coalesce_both(Header * left, Header * block, Header * right) {
-  Header * rightRight = get_right_header(right);
-  size_t oldSize = get_block_size(left);
+inline void MallocHeap::coalesce_both(MallocHeap::Header * left, MallocHeap::Header * block, MallocHeap::Header * right) {
+  MallocHeap::Header * rightRight = get_right_header(right);
+  std::size_t oldSize = get_block_size(left);
 
   // Update sizes
   set_block_size(left, get_block_size(left) + get_block_size(block) + get_block_size(right));
@@ -477,9 +473,9 @@ inline void MallocHeap::coalesce_both(Header * left, Header * block, Header * ri
  *
  * @param block block to return to the free list
  */
-inline void MallocHeap::free_list_deallocate(Header * block) {
-  Header * left = get_left_header(block);
-  Header * right = get_right_header(block);
+inline void MallocHeap::free_list_deallocate(MallocHeap::Header * block) {
+  MallocHeap::Header * left = get_left_header(block);
+  MallocHeap::Header * right = get_right_header(block);
 
   if (get_block_state(left) && get_block_state(right)) {
     freelist_insert(block);
@@ -505,14 +501,14 @@ inline void MallocHeap::deallocate_object(void * p) {
   }
 
   // Retrieve the block's Header from the pointer and verify it has not be overflowed
-  Header * block = ptr_to_header(p);
-  if (get_block_state(block) == UNALLOCATED) {
+  MallocHeap::Header * block = ptr_to_header(p);
+  if (get_block_state(block) == state_unallocated) {
     fprintf(stderr, "Double Free Detected\n");
-    assert(false);
+    mAssert(false);
   }
 
   // Update the block's allocation status
-  set_block_state(block, UNALLOCATED);
+  set_block_state(block, state_unallocated);
 
   // Return the block to the free list
   free_list_deallocate(block);
@@ -525,9 +521,9 @@ inline void MallocHeap::deallocate_object(void * p) {
  * @return One of the nodes in the cycle or NULL if no cycle is present
  */
 inline MallocHeap::Header * MallocHeap::detect_cycles() {
-  for (int i = 0; i < N_LISTS; i++) {
-    Header * freelist = &freelistSentinels[i];
-    for (Header * slow = freelist->next, * fast = freelist->next->next;
+  for (int i = 0; i < n_lists; i++) {
+    MallocHeap::Header * freelist = &freelistSentinels[i];
+    for (MallocHeap::Header * slow = freelist->next, * fast = freelist->next->next;
          fast != freelist;
          slow = slow->next, fast = fast->next->next) {
       if (slow == fast) {
@@ -546,9 +542,9 @@ inline MallocHeap::Header * MallocHeap::detect_cycles() {
  *         such node exists
  */
 inline MallocHeap::Header * MallocHeap::verify_pointers() {
-  for (int i = 0; i < N_LISTS; i++) {
-    Header * freelist = &freelistSentinels[i];
-    for (Header * cur = freelist->next; cur != freelist; cur = cur->next) {
+  for (int i = 0; i < n_lists; i++) {
+    MallocHeap::Header * freelist = &freelistSentinels[i];
+    for (MallocHeap::Header * cur = freelist->next; cur != freelist; cur = cur->next) {
       if (cur->next->prev != cur || cur->prev->next != cur) {
         return cur;
       }
@@ -564,17 +560,15 @@ inline MallocHeap::Header * MallocHeap::verify_pointers() {
  * @return true if the list is valid
  */
 inline bool MallocHeap::verify_freelist() {
-  Header * cycle = detect_cycles();
+  MallocHeap::Header * cycle = detect_cycles();
   if (cycle != NULL) {
     fprintf(stderr, "Cycle Detected\n");
-    print_sublist(print_object, cycle->next, cycle);
     return false;
   }
 
-  Header * invalid = verify_pointers();
+  MallocHeap::Header * invalid = verify_pointers();
   if (invalid != NULL) {
     fprintf(stderr, "Invalid pointers\n");
-    print_object(invalid);
     return false;
   }
 
@@ -589,17 +583,15 @@ inline bool MallocHeap::verify_freelist() {
  *
  * @return a pointer to an invalid Header or NULL if all Header's are valid
  */
-inline MallocHeap::Header * MallocHeap::verify_chunk(Header * chunk) {
-	if (get_block_state(chunk) != FENCEPOST) {
+inline MallocHeap::Header * MallocHeap::verify_chunk(MallocHeap::Header * chunk) {
+	if (get_block_state(chunk) != state_fencepost) {
     fprintf(stderr, "Invalid fencepost\n");
-    print_object(chunk);
     return chunk;
   }
 
-	for (; get_block_state(chunk) != FENCEPOST; chunk = get_right_header(chunk)) {
+	for (; get_block_state(chunk) != state_fencepost; chunk = get_right_header(chunk)) {
 	  if (get_block_size(chunk)  != get_right_header(chunk)->left_size) {
       fprintf(stderr, "Invalid sizes\n");
-      print_object(chunk);
       return chunk;
     }
   }
@@ -614,8 +606,8 @@ inline MallocHeap::Header * MallocHeap::verify_chunk(Header * chunk) {
  * @return true if the boundary tags are valid
  */
 inline bool MallocHeap::verify_tags() {
-  for (size_t i = 0; i < numOsChunks; i++) {
-    Header * invalid = verify_chunk(osChunkList[i]);
+  for (std::size_t i = 0; i < numOsChunks; i++) {
+    MallocHeap::Header * invalid = verify_chunk(osChunkList[i]);
     if (invalid != NULL) {
       return invalid;
     }
@@ -638,20 +630,20 @@ MallocHeap::MallocHeap() {
   setvbuf(stdout, NULL, _IONBF, 0);
 
   // Allocate the first chunk from the OS
-  Header * block = allocate_chunk(ARENA_SIZE);
+  MallocHeap::Header * block = allocate_chunk(arena_size);
 
-  Header * prevFencePost = get_header_from_offset(block, -ALLOC_HEADER_SIZE);
+  MallocHeap::Header * prevFencePost = get_header_from_offset(block, -getAllocHeaderSize());
   insert_os_chunk(prevFencePost);
 
   lastFencePost = get_header_from_offset(block, get_block_size(block) );
 
   // Set the base pointer to the beginning of the first fencepost in the first
   // chunk from the OS
-  base = ((char *) block) - ALLOC_HEADER_SIZE; //sizeof(Header);
+  base = ((char *) block) - getAllocHeaderSize(); //sizeof(MallocHeap::Header);
 
   // Initialize freelist sentinels
-  for (int i = 0; i < N_LISTS; i++) {
-    Header * freelist = &freelistSentinels[i];
+  for (int i = 0; i < n_lists; i++) {
+    MallocHeap::Header * freelist = &freelistSentinels[i];
     freelist->next = freelist;
     freelist->prev = freelist;
   }
@@ -663,23 +655,23 @@ MallocHeap::MallocHeap() {
 /*
  * External interface
  */
-void * MallocHeap::my_malloc(size_t size) {
+void * MallocHeap::my_malloc(std::size_t size) {
   pthread_mutex_lock(&mutex);
-  Header * hdr = allocate_object(size);
+  MallocHeap::Header * hdr = allocate_object(size);
   pthread_mutex_unlock(&mutex);
   if (hdr == NULL) {
     return NULL;
   } else {
-	  set_block_state(hdr, ALLOCATED);
+	  set_block_state(hdr, state_allocated);
 	  return hdr->data;
   }
 }
 
-void * MallocHeap::my_calloc(size_t nmemb, size_t size) {
+void * MallocHeap::my_calloc(std::size_t nmemb, std::size_t size) {
   return memset(my_malloc(size * nmemb), 0, size * nmemb);
 }
 
-void * MallocHeap::my_realloc(void * ptr, size_t size) {
+void * MallocHeap::my_realloc(void * ptr, std::size_t size) {
   void * mem = my_malloc(size);
   memcpy(mem, ptr, size);
   my_free(ptr);

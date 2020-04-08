@@ -4,10 +4,10 @@
 int main() {
   initialize_test(__FILE__);
 
-  void * ptr = mallocing(8, print_status, false);
-  mallocing(ARENA_SIZE - 3 * ALLOC_HEADER_SIZE - 128, print_status, false);
-  freeing(ptr, 8, print_status, false);
-  mallocing(ARENA_SIZE - 3 * ALLOC_HEADER_SIZE - 128, print_status, false);
+  void * ptr = mallocing(8, mPrinter->print_status, false);
+  mallocing(mHeap->arena_size - 3 * mHeap->getAllocHeaderSize() - 128, mPrinter->print_status, false);
+  freeing(ptr, 8, mPrinter->print_status, false);
+  mallocing(mHeap->arena_size - 3 * mHeap->getAllocHeaderSize() - 128, mPrinter->print_status, false);
 
   finalize_test();
 }

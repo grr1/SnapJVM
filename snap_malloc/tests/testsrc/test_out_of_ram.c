@@ -14,7 +14,7 @@ int main() {
   setrlimit(RLIMIT_AS, &lim);
 
   // Alloce more than allotted memory
-  void * p = mallocing(ARENA_SIZE - 3 * ALLOC_HEADER_SIZE, print_status, false);
+  void * p = mallocing(mHeap->arena_size - 3 * mHeap->getAllocHeaderSize(), mPrinter->print_status, false);
 
   printf("Mallocing an additional 8 bytes, which requires more memory from "
          "sbrk, but sbrk will fail\n");
@@ -28,8 +28,8 @@ int main() {
   puts("");
 
   printf("Testing that available memory can still be reallocated\n");
-  freeing(p, 8, print_status, false);
-  mallocing(8, print_status, false);
+  freeing(p, 8, mPrinter->print_status, false);
+  mallocing(8, mPrinter->print_status, false);
 
   finalize_test();
 }

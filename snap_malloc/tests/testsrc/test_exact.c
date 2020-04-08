@@ -4,7 +4,7 @@
 int main() {
   initialize_test(__FILE__);
 
-  mallocing(ARENA_SIZE - 3 * ALLOC_HEADER_SIZE /*sizeof(header)*/, print_status, false);
+  mallocing(mHeap->arena_size - 3 * mHeap->getAllocHeaderSize() /*sizeof(header)*/, mPrinter->print_status, false);
 
   finalize_test();
 }

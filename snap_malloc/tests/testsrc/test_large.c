@@ -10,9 +10,9 @@ int main() {
 
   for (int j = 0; j < NLOOPS; j++) {
     void * ptrs[NALLOCS];
-    mallocing_loop(ptrs, 10000, NALLOCS, print_status, false);
+    mallocing_loop(ptrs, 10000, NALLOCS, mPrinter->print_status, false);
 
-    tags_print(print_object);
+    mPrinter->tags_print(mHeap, mPrinter->print_object);
 
     for (int i = j % 2; i < NALLOCS; i+=2) {
       freeing(ptrs[i], 8, NULL, true);

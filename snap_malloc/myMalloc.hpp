@@ -5,22 +5,35 @@
 #include <sys/types.h>
 #include <cstddef>
 
-/* Size of the Header for an allocated block
- *
- * The size of the normal minus the size of the two free list pointers as
- * they are only maintained while block is free
- */
-// #define ALLOC_HEADER_SIZE (sizeof(Header) - (2 * sizeof(Header *)))
-
 class MallocHeap {
 	friend class MallocPrinter;
-	friend class mallocTester;
+	friend class MallocTester;
 
 	public:
 		MallocHeap();
 		~MallocHeap();
 
-	private:
+		/* Due to the way assert() prints error messges we use out own assert function
+		 * for deteminism when testing assertions
+		 */
+		inline void mAssert(int e);
+
+		/* Size of the Header for an allocated block
+		 *
+		 * The size of the normal minus the size of the two free list pointers as
+		 * they are only maintained while block is free
+		 */
+		static int getAllocHeaderSize() {
+			return (sizeof(MallocHeap::Header) - (2 * sizeof(MallocHeap::Header *)));
+		}
+
+		// Malloc interface
+		void * my_malloc(std::size_t size);
+		void * my_calloc(std::size_t nmemb, std::size_t size);
+		void * my_realloc(void * ptr, std::size_t size);
+		void my_free(void * p);
+
+//	private:
 		/*
 		 * The Header contains all metadata about a block to be allocated
 		 * The size fields allow accessing the neighboring blocks in memory by
@@ -70,75 +83,72 @@ class MallocHeap {
 		 * http://en.cppreference.com/w/c/language/enum
 		 */
 		enum state {
-		  UNALLOCATED = 0,
-		  ALLOCATED = 1,
-		  FENCEPOST = 2,
+		  state_unallocated = 0,
+		  state_allocated = 1,
+		  state_fencepost = 2,
 		};
 
 		enum {
-			RELATIVE_POINTERS = 1,
-			ARENA_SIZE = 4096,
-			N_LISTS = 59,
-			MIN_ALLOCATION = 8,		/* The minimum size request the allocator will service */
-			MAX_OS_CHUNKS 1024,
-			/* Size of the Header for an allocated block
-			 *
-			 * The size of the normal minus the size of the two free list pointers as
-			 * they are only maintained while block is free
-			 */
-			ALLOC_HEADER_SIZE (sizeof(Header) - (2 * sizeof(Header *)))
+			use_relative_pointers = 1,
+			arena_size = 4096,
+			n_lists = 59,
+			min_allocation = 8,		/* The minimum size request the allocator will service */
+			max_os_chunks = 1024
 		};
 
+		bool verify();
+
+	private:
 		// Helper functions for getting and storing size and state from Header
 		// Since the size is a multiple of 8, the last 3 bits are always 0s.
 		// Therefore we use the 3 lowest bits to store the state of the object.
 		// This is going to save 8 bytes in all objects.
-		inline size_t get_block_size(Header * h);
-		inline void set_block_size(Header * h, size_t size);
-		inline enum state get_block_state(Header *h);
-		inline void set_block_state(Header * h, enum state s);
-		inline void set_block_size_and_state(Header * h, size_t size, enum state s);
+		inline size_t get_block_size(MallocHeap::Header * h);
+		inline void set_block_size(MallocHeap::Header * h, size_t size);
+		inline enum MallocHeap::state get_block_state(MallocHeap::Header *h);
+		inline void set_block_state(MallocHeap::Header * h, enum MallocHeap::state s);
+		inline void set_block_size_and_state(MallocHeap::Header * h, std::size_t size, enum MallocHeap::state s);
 
 		// Manage accessing and mutatig the freelist bitmap
-		inline void set_bit(size_t i);
-		inline void unset_bit(size_t i);
-		inline bool get_bit(size_t i);
-		inline size_t get_next_set_bit(size_t i);
-		inline size_t size_to_index(size_t size);
+		inline void set_bit(std::size_t i);
+		inline void unset_bit(std::size_t i);
+		inline bool get_bit(std::size_t i);
+		inline size_t get_next_set_bit(std::size_t i);
+		inline size_t size_to_index(std::size_t size);
 
 		// Helper functions for manipulating pointers to Headers
-		inline Header * get_header_from_offset(void * ptr, ptrdiff_t off);
-		inline Header * get_left_header(Header * h);
-		inline Header * ptr_to_header(void * p);
+		inline MallocHeap::Header * get_header_from_offset(void * ptr, ptrdiff_t off);
+		inline MallocHeap::Header * get_left_header(MallocHeap::Header * h);
+		inline MallocHeap::Header * ptr_to_header(void * p);
 
 		// Helper functions for freeing a block
-		inline void move_coalesced(Header * block, size_t oldSize);
-		inline void coalesce_left(Header * left, Header * block, Header * right);
-		inline void coalesce_right(Header * block, Header * right);
-		inline void coalesce_both(Header * left, Header * block, Header * right);
-		inline void free_list_deallocate(Header * block);
+		inline void move_coalesced(MallocHeap::Header * block, std::size_t oldSize);
+		inline void coalesce_left(MallocHeap::Header * left, MallocHeap::Header * block, MallocHeap::Header * right);
+		inline void coalesce_right(MallocHeap::Header * block, MallocHeap::Header * right);
+		inline void coalesce_both(MallocHeap::Header * left, MallocHeap::Header * block, MallocHeap::Header * right);
+		inline void free_list_deallocate(MallocHeap::Header * block);
 		inline void deallocate_object(void * p);
 
 		// Helper functions for allocating more memory from the OS
-		inline void initialize_fencepost(Header * fp, size_t left_size);
-		inline void insert_os_chunk(Header * hdr);
-		inline void insert_fenceposts(void * raw_mem, size_t size);
-		Header * allocate_chunk(size_t size);
+		inline void initialize_fencepost(MallocHeap::Header * fp, std::size_t left_size);
+		inline void insert_os_chunk(MallocHeap::Header * hdr);
+		inline void insert_fenceposts(void * raw_mem, std::size_t size);
+		MallocHeap::Header * allocate_chunk(std::size_t size);
 
 		// Helper functions for allocating a block
-		Header * get_freelist_sentinel(size_t size);
-		Header * get_populated_freelist_sentinel(size_t size);
-		inline Header * split_block(Header * block, size_t size);
-		inline Header * free_list_get_allocable(size_t size);
-		inline Header * allocate_object(size_t raw_size);
+		MallocHeap::Header * get_freelist_sentinel(std::size_t size);
+		MallocHeap::Header * get_populated_freelist_sentinel(std::size_t size);
+		inline MallocHeap::Header * split_block(MallocHeap::Header * block, std::size_t size);
+		inline MallocHeap::Header * free_list_get_allocable(std::size_t size);
+		inline MallocHeap::Header * allocate_object(std::size_t raw_size);
 
 		// Helper functions for manipulating the freelist
-		inline void freelist_remove(Header * block);
-		inline void freelist_insert_between(Header * block, Header * prev, Header * next);
-		inline void freelist_insert(Header * block);
+		inline void freelist_remove(MallocHeap::Header * block);
+		inline void freelist_insert_between(MallocHeap::Header * block, MallocHeap::Header * prev, MallocHeap::Header * next);
+		inline void freelist_insert(MallocHeap::Header * block);
 
 		// Helper to find a block's right neighbor
-		Header * get_right_header(Header * h);
+		MallocHeap::Header * get_right_header(MallocHeap::Header * h);
 
 		/*
 		 * Mutex to ensure thread safety for the freelist
@@ -148,7 +158,7 @@ class MallocHeap {
 		/*
 		 * Array of sentinel nodes for the freelists
 		 */
-		Header freelistSentinels[N_LISTS];
+		MallocHeap::Header freelistSentinels[n_lists];
 
 		/*
 		 * bitmap representing which of the freelists have available blocks. This
@@ -159,13 +169,13 @@ class MallocHeap {
 		 * By using the bitmap we only need to load a small number of bytes into cache
 		 * to perform this lookup operation instead of checking each of the sentinels.
 		 */
-		char freelist_bitmap[(N_LISTS | 7) >> 3];
+		char freelist_bitmap[(n_lists | 7) >> 3];
 
 		/*
 		 * Pointer to the second fencepost in the most recently allocated chunk from
 		 * the OS. Used for coalescing chunks
 		 */
-		Header * lastFencePost;
+		MallocHeap::Header * lastFencePost;
 
 		/*
 		 * Pointer to maintian the base of the heap to allow printing based on the
@@ -173,24 +183,18 @@ class MallocHeap {
 		 */
 		void * base;
 
-		Header * osChunkList [MAX_OS_CHUNKS];
-		size_t numOsChunks;
+		MallocHeap::Header * osChunkList [max_os_chunks];
+		std::size_t numOsChunks;
 
 		// Helper functions for verifying that the data structures are structurally valid
-		inline Header * detect_cycles();
-		inline Header * verify_pointers();
+		inline MallocHeap::Header * detect_cycles();
+		inline MallocHeap::Header * verify_pointers();
 		inline bool verify_freelist();
-		inline Header * verify_chunk(Header * chunk);
+		inline MallocHeap::Header * verify_chunk(MallocHeap::Header * chunk);
 		inline bool verify_tags();
 
-		// Debug list verifitcation
-		bool verify();
-
-		// Malloc interface
-		void * my_malloc(size_t size);
-		void * my_calloc(size_t nmemb, size_t size);
-		void * my_realloc(void * ptr, size_t size);
-		void my_free(void * p);
+		// Debug list verification
+//		bool verify();
 };
 
 #endif // MY_MALLOC_H

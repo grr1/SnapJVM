@@ -13,14 +13,14 @@ int main() {
   void * ptrs[NALLOCS];
   for (int j = 0; j < 32; j++) {
     for (int i = 0; i < NALLOCS; i++) {
-      ptrs[i] = mallocing(sizes[i], print_status, true);
+      ptrs[i] = mallocing(sizes[i], mPrinter->print_status, true);
     }
-    tags_print(print_status);
+    mPrinter->tags_print(mHeap, mPrinter->print_status);
     puts("");
     for (int i = 0; i < NALLOCS / 2; i++) {
-      freeing(ptrs[rand[i]], sizes[rand[i]], print_status, true);
+      freeing(ptrs[rand[i]], sizes[rand[i]], mPrinter->print_status, true);
     }
-    tags_print(print_status);
+    mPrinter->tags_print(mHeap, mPrinter->print_status);
     puts("");
   }
 

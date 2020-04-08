@@ -11,12 +11,12 @@ int main() {
 
   void * ptrs[NALLOCS];
   for (int i = 0; i < NALLOCS; i++) {
-    ptrs[rand[i]] = mallocing(sizes[rand[i]], print_status, false);
+    ptrs[rand[i]] = mallocing(sizes[rand[i]], mPrinter->print_status, false);
   }
   for (int i = 0; i < NALLOCS; i++) {
-    freeing(ptrs[i], sizes[i], print_status, false);
+    freeing(ptrs[i], sizes[i], mPrinter->print_status, false);
     if (i % 32 == 31) {
-      freelist_print(print_object);
+      mPrinter->freelist_print(mHeap, mPrinter->print_object);
     }
   }
 

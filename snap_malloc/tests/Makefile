@@ -4,8 +4,8 @@ CFLAGS = -std=c++17 -I..
 LDFLAGS = -lpthread
 TEST_SRC_DIR = ./testsrc
 TEST_BIN_DIR = .
-MALLOC_FILES = ../myMalloc.cpp ../testing.c
-MALLOC_HEADERS = ../myMalloc.hpp ../testing.h
+MALLOC_FILES = ../myMalloc.cpp ../testing.cpp ../printing.cpp
+MALLOC_HEADERS = ../myMalloc.hpp ../testing.h ../printing.hpp
 
 .PHONY: all
 all: simple malloc free robustness other
