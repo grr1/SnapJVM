@@ -90,6 +90,7 @@ ByteCodeGen_X86_64::codeGen()
     }
 
     _classClass->_methodsArray = new Method[_classClass->_methods_count];
+    _classClass->_methodsDict = new std::map<std::string, InvokeJVMRuntimeFuncPtr>;
 
     _codeStrStream = new std::stringstream();
 
@@ -277,6 +278,9 @@ ByteCodeGen_X86_64::codeGen()
                 _method->_codeStr = strdup(this->_codeStrStream->str().c_str());
                 _method->_code = _assembler_X86_64->assemble(_method->_codeStr);
                 _method->_callMethod = (InvokeJVMRuntimeFuncPtr) _method->_code;
+
+                _classClass->_methodsDict->insert({_method->_methodName, _method->_callMethod});
+                //TODO: generate "unresolved array" per class
             }
         }
         if (SnapJVMRuntime::isVerboseMode()) {
@@ -1321,9 +1325,11 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
 
             if (info != NULL) {
                 CONSTANT_Methodref_info *minfo = (CONSTANT_Methodref_info) info;
+                //u2 class_index
             }
 
-            // TODO: extract fp and call fp
+            // TODO: from object table, translate cPool index to assembly label/fp
+            // TODO: call fp
 
             *_codeStrStream << "       movq   %rax" << ", " << "%" << getReg();
             pushVirtualStack();

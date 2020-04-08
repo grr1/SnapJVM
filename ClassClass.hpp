@@ -12,6 +12,7 @@ class Method;
 
 #include "ByteCode.hpp"
 #include "ClassParser.hpp"
+#include <map>
 
 class ConstantPoolInfo;
 typedef ConstantPoolInfo * ConstantPoolInfoPtr;
@@ -56,6 +57,9 @@ public:
 	// Array with all methods in this class
 	int nMethods;
 	Method * _methodsArray;
+
+    // Dict with all methods in this class
+    std::map<std::string, InvokeJVMRuntimeFuncPtr> * _methodsDict;
 
 public:
 	ClassClass();
