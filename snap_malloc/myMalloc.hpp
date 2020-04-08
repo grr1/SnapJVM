@@ -90,12 +90,13 @@ class MallocHeap {
 
 		enum {
 			use_relative_pointers = 1,
-			arena_size = 4096,
+			arena_size = 1024,
 			n_lists = 59,
 			min_allocation = 8,		/* The minimum size request the allocator will service */
 			max_os_chunks = 1024
 		};
 
+		// Debug list verification
 		bool verify();
 
 	private:
@@ -192,9 +193,6 @@ class MallocHeap {
 		inline bool verify_freelist();
 		inline MallocHeap::Header * verify_chunk(MallocHeap::Header * chunk);
 		inline bool verify_tags();
-
-		// Debug list verification
-//		bool verify();
 };
 
 #endif // MY_MALLOC_H

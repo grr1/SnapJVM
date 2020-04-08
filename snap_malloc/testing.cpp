@@ -15,6 +15,9 @@ MallocPrinter* mPrinter;
  * @param name the path to the test file
  */
 void initialize_test(const char * name) {
+  mHeap = new MallocHeap();
+  mPrinter = new MallocPrinter();
+
   const char * filename = strrchr(name, '/');
   printf("TEST: %s\n", filename ? filename+1 : name);
 

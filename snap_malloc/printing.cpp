@@ -208,7 +208,7 @@ void MallocPrinter::freelist_print(MallocHeap* mHeap, printFormatter pf) {
   }
 
   for (size_t i = 0; i < MallocHeap::n_lists; i++) {
-    MallocHeap::Header * freelist = &(mHeap->freelistSentinels[i]);
+    MallocHeap::Header * freelist = &mHeap->freelistSentinels[i];
     if (freelist->next != freelist) {
       printf("L%zu: ", i);
       print_sublist(mHeap, pf, freelist->next, freelist);

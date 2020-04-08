@@ -27,12 +27,6 @@ class MallocPrinter {
 
 //	private:
 		static constexpr char* malloc_color = "MALLOC_DEBUG_COLOR";
-//		enum {
-//			MALLOC_COLOR = "MALLOC_DEBUG_COLOR";
-//		};
-
-//		static bool check_env;
-//		static bool use_color;
 
 		/* Functions defining a format to print */
 		void basic_print(MallocHeap* mHeap, MallocHeap::Header * block);

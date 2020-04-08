@@ -1,7 +1,7 @@
 CC = g++
 #CFLAGS = -std=gnu11 -Wall -Wextra -I..
 CFLAGS = -std=c++17 -I..
-LDFLAGS = -lpthread
+LDFLAGS = -lpthread -g
 TEST_SRC_DIR = ./testsrc
 TEST_BIN_DIR = .
 MALLOC_FILES = ../myMalloc.cpp ../testing.cpp ../printing.cpp
