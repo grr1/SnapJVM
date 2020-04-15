@@ -43,6 +43,7 @@ int main(int argc, char **argv) {
 			break;
         case 'v':
         	SnapJVMRuntime::setVerboseMode(true);
+        	//setbuf(stdout, NULL);
 			break;
         case 't':
 		SnapJVMRuntime::setTestMode(true);

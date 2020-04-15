@@ -1491,7 +1491,6 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
                 pushVirtualStack();
                 *_codeStrStream << "	   movq	   $" << valuePtr << ", %rax\n"; //moved in
                 *_codeStrStream << "	   movq	   (%rax)" << ", %" << getReg() << "\n"; //moved in
-                char formatString[5] = "%d\n";
             }
             break;
         }
@@ -1505,7 +1504,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
             u8 *valuePtr = _classClass->_staticVars[index];
             //Move that value into the register reg = 0xDEADBEEF
             //Then set the value of the register to that dereferenced address. reg = *reg
-            //popVirtualStack();
+            popVirtualStack();
             *_codeStrStream << "	    movq	$" << valuePtr << ", %rax\n";
             *_codeStrStream << "	    movq	%" << getReg() << ", (%rax)\n";
 
