@@ -225,7 +225,7 @@ ByteCodeGen_X86_64::codeGen() {
                             printf(" #%d", arg);
                             ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
                             if (info != NULL) { // skip entries with no info
-                                printf("\t// ");
+                                printf("\t ");
                                 info->printShort(_classClass);
                             }
                         } else if (flags & ByteCode::Flags::_fmt_has_k &&
@@ -235,7 +235,7 @@ ByteCodeGen_X86_64::codeGen() {
                             printf(" #%d", arg);
                             ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
                             if (info != NULL) { // skip entries with no info
-                                printf("\t// ");
+                                printf("\t ");
                                 info->printShort(_classClass);
                             }
                         } else if (flags & ByteCode::Flags::_fmt_has_k &&
@@ -245,7 +245,7 @@ ByteCodeGen_X86_64::codeGen() {
                             printf(" #%d", arg);
                             ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
                             if (info != NULL) { // skip entries with no info
-                                printf("\t// ");
+                                printf("\t ");
                                 info->printShort(_classClass);
                             }
                         }
@@ -261,25 +261,6 @@ ByteCodeGen_X86_64::codeGen() {
                     // Generate code for every ByteCode
                     codeGenOne(c, codeArray, k);
 
-                    //int byteCodeLength = ByteCode::_lengths[c];
-                    //calculate the length of variable-length ByteCode
-                    //similar to Code printing in method print() in ClassClass.cpp
-                    /*if (c == ByteCode::_lookupswitch) {
-                        int padBytes = 3 - k % 4;
-                        //npairs starts at k+1+padBytes + 4;
-                        u1 *p = &codeArray[k + padBytes + 5];
-                        int nPairs = (int) ClassParser::readU4(p);
-                        byteCodeLength = padBytes + 9 + nPairs * 8;
-                    } else if (c == ByteCode::_tableswitch) {
-                        int padBytes = 3 - k % 4;
-                        //lowbyte starts at k+1+padBytes + 4;
-                        u1 *p = &codeArray[k + padBytes + 5];
-                        int lowValue = (int) ClassParser::readU4(p);
-                        //highbyte starts at k+1+padBytes + 8;
-                        p = &codeArray[k + padBytes + 9];
-                        int highValue = (int) ClassParser::readU4(p);
-                        byteCodeLength = padBytes + 13 + (highValue - lowValue + 1) * 4;
-                    }*/
                     k += ByteCode::_lengths[c] & 0xF;
                     uptr += ByteCode::_lengths[c] & 0xF;
                 }
@@ -496,7 +477,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
 
             if (info != NULL){
                 u8 *doubleAsLong = (u8*) &(dinfo->value);
-                //*this->_codeStrStream << "       movq   $" << dinfo->value << ", %rdi" << "\n";
+                // *this->_codeStrStream << "       movq   $" << dinfo->value << ", %rdi" << "\n";
                 *this->_codeStrStream << "       movq   $0x" << std::hex << *doubleAsLong << ", %" << getReg() << "\n";
             }
             pushVirtualStack();
