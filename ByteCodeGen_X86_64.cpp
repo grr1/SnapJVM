@@ -261,7 +261,7 @@ ByteCodeGen_X86_64::codeGen() {
                     // Generate code for every ByteCode
                     codeGenOne(c, codeArray, k);
 
-                    int byteCodeLength = ByteCode::_lengths[c];
+                    int byteCodeLength = ByteCode::_lengths[c] & 0xF;
                     //calculate the length of variable-length ByteCode
                     //similar to Code printing in method print() in ClassClass.cpp
                     if (c == ByteCode::_lookupswitch) {
@@ -280,8 +280,8 @@ ByteCodeGen_X86_64::codeGen() {
                         int highValue = (int) ClassParser::readU4(p);
                         byteCodeLength = padBytes + 13 + (highValue - lowValue + 1) * 4;
                     }
-                    k += ByteCode::_lengths[c] & 0xF;
-                    uptr += ByteCode::_lengths[c] & 0xF;
+                    k += byteCodeLength;
+                    uptr += byteCodeLength;
                 }
 
                 // Done by return
