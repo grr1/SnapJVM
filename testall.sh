@@ -13,6 +13,9 @@ TEST_SRC_FOLDER="test_src"
 TESTS_PASSED="tests_passed"
 TESTS_FAILED="tests_failed"
 
+# to create test out folder if not exists
+mkdir -p $TEST_OUT_FOLDER
+
 # to keep count of success rate
 echo 0 > ./$TEST_OUT_FOLDER/$TESTS_PASSED
 echo 0 > ./$TEST_OUT_FOLDER/$TESTS_FAILED
