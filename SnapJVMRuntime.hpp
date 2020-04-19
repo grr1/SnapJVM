@@ -46,6 +46,9 @@ public:
 
 	// Calls runtime
 	static void * runtime_invokevirtual(SnapJVMRuntime * runTime, Object * o, void *a, void *b, void *c, void *d);
+  static void * runtime_newarray(u8 type, u8 length);
+  static u8 runtime_array_load(u8 type, u8 index, u8 reference);
+  static void runtime_array_store(u8 type, u8 value, u8 index, u8 reference);
 };
 
 inline SnapJVMRuntime *
@@ -57,6 +60,9 @@ SnapJVMRuntime::TheJVMRuntime()
 inline void
 SnapJVMRuntime::setVerboseMode(bool verboseMode) {
 	_verboseMode = verboseMode;
+	if(verboseMode){
+	  setbuf(stdout, NULL);
+	}
 }
 
 inline bool
