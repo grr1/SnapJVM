@@ -12,6 +12,8 @@ class Method;
 
 #include "ByteCode.hpp"
 #include "ClassParser.hpp"
+#include <map>
+#include <string.h>
 
 class ConstantPoolInfo;
 typedef ConstantPoolInfo * ConstantPoolInfoPtr;
@@ -56,6 +58,14 @@ public:
 	// Array with all methods in this class
 	int nMethods;
 	Method * _methodsArray;
+	//Map for all static variables
+	std::map <u2, u8*> _staticVars;
+
+	//Map for all instance variables
+	std::map <u2, u8*> _instanceVars;
+
+	//Map for all class methods
+	std::map <u2, Method> _classMethods;
 
 public:
 	ClassClass();

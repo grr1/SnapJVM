@@ -7,6 +7,9 @@ class Add {
 		if (l == k){
 		  System.out.println("Equal");
 		}
+		else {
+		  System.out.println("Not Equal");
+		}
 		
 	}
 }
