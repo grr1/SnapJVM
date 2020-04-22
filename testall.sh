@@ -14,6 +14,9 @@ TEST_IGNORE_FOLDER="test_ignore"
 TESTS_PASSED="tests_passed"
 TESTS_FAILED="tests_failed"
 
+# to create test out folder if not exists
+mkdir -p $TEST_OUT_FOLDER
+
 # to keep count of success rate
 echo 0 > ./$TEST_OUT_FOLDER/$TESTS_PASSED
 echo 0 > ./$TEST_OUT_FOLDER/$TESTS_FAILED
@@ -80,11 +83,5 @@ done
 # final statistics
 echo "`cat ./$TEST_OUT_FOLDER/$TESTS_PASSED` tests passed"
 echo "`cat ./$TEST_OUT_FOLDER/$TESTS_FAILED` tests failed"
-<<<<<<< HEAD
 rm ./$TEST_OUT_FOLDER/*
 rm ./$TEST_FOLDER/*
-=======
-echo "`ls ./$TEST_IGNORE_FOLDER/ | wc -w` tests ignored (located in ./$TEST_IGNORE_FOLDER for now)"
-rm ./$TEST_OUT_FOLDER/$TESTS_PASSED
-rm ./$TEST_OUT_FOLDER/$TESTS_FAILED
->>>>>>> niemiec_malloc
