@@ -371,15 +371,15 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
         }
             break;
 
-        case ByteCode::_lconst_0: {
-            notImplemented(code);
-        }
-            break;
-
-        case ByteCode::_lconst_1: {
-            notImplemented(code);
-        }
-            break;
+    case ByteCode::_lconst_0:
+    case ByteCode::_lconst_1:
+	{
+		int val = code - ByteCode::_lconst_0;
+			*_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
+			*_codeStrStream << "       movq $" << val << ", %" << getReg() << "\n";
+			pushVirtualStack();
+	}
+	break;
 
         case ByteCode::_fconst_0: {
             double d = 0;
