@@ -107,6 +107,8 @@ if (len(sys.argv) == 3 and sys.argv[1] == '-t'):
     runTest(sys.argv[2], 0, True, 0);
     exit(0);
 
+print(yellow('IMPORTANT:\nIt is expected that certain tests fail with the current value of arena_size - see the README\n'))
+
 ret = runSuite('Simple Tests', simpleTests, verbose, 0);
 pointsEarned += ret[0];
 totalPoints += ret[1];

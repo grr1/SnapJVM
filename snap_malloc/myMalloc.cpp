@@ -25,53 +25,6 @@ inline void MallocHeap::mAssert(int e) {
 // Therefore we use the 3 lowest bits to store the state of the object.
 // This is going to save 8 bytes in all objects.
 
-inline std::size_t MallocHeap::get_block_size(MallocHeap::Header * h) {
-     return h->size_and_state & ~0x3;
-}
-
-inline void MallocHeap::set_block_size(MallocHeap::Header * h, std::size_t size) {
-     h->size_and_state = size | (h->size_and_state & 0x3);
-}
-
-inline enum MallocHeap::state MallocHeap::get_block_state(MallocHeap::Header *h) {
-     return (enum state) (h->size_and_state & 0x3);
-}
-
-inline void MallocHeap::set_block_state(MallocHeap::Header * h, enum state s) {
-     h->size_and_state = (h->size_and_state & ~0x3) | s;
-}
-
-inline void MallocHeap::set_block_size_and_state(MallocHeap::Header * h, std::size_t size, enum state s) {
-     h->size_and_state=(size & ~0x3)|(s &0x3);
-}
-
-/**
- * @brief Set the ith bit in the bitmap
- *
- * @param i The bit to set
- */
-inline void MallocHeap::set_bit(std::size_t i) {
-  freelist_bitmap[i >> 3] |= (1 << (i & 7));
-}
-
-/**
- * @brief Unset the ith bit in the bitmap
- *
- * @param i The bit to unset
- */
-inline void MallocHeap::unset_bit(std::size_t i) {
-  freelist_bitmap[i >> 3] &= ~(1 << (i & 7));
-}
-
-/**
- * @brief Retrieve the ith bit from the bitmap
- *
- * @param i The bit to get
- */
-inline bool MallocHeap::get_bit(std::size_t i) {
-  return (freelist_bitmap[i >> 3] >> (i & 7)) & 1;
-}
-
 /**
  * @brief get the first bit >= i which it set
  *

@@ -104,16 +104,35 @@ class MallocHeap {
 		// Since the size is a multiple of 8, the last 3 bits are always 0s.
 		// Therefore we use the 3 lowest bits to store the state of the object.
 		// This is going to save 8 bytes in all objects.
-		inline size_t get_block_size(MallocHeap::Header * h);
-		inline void set_block_size(MallocHeap::Header * h, size_t size);
-		inline enum MallocHeap::state get_block_state(MallocHeap::Header *h);
-		inline void set_block_state(MallocHeap::Header * h, enum MallocHeap::state s);
-		inline void set_block_size_and_state(MallocHeap::Header * h, std::size_t size, enum MallocHeap::state s);
+		inline size_t get_block_size(MallocHeap::Header * h) {
+			return h->size_and_state & ~0x3;
+		}
+		inline void set_block_size(MallocHeap::Header * h, size_t size) {
+			h->size_and_state = size | (h->size_and_state & 0x3);
+		}
+		inline enum MallocHeap::state get_block_state(MallocHeap::Header *h) {
+			return (enum state) (h->size_and_state & 0x3);
+		}
+		inline void set_block_state(MallocHeap::Header * h, enum MallocHeap::state s) {
+			h->size_and_state = (h->size_and_state & ~0x3) | s;
+		}
+		inline void set_block_size_and_state(MallocHeap::Header * h, std::size_t size, enum MallocHeap::state s) {
+			h->size_and_state=(size & ~0x3)|(s &0x3);
+		}
 
 		// Manage accessing and mutatig the freelist bitmap
-		inline void set_bit(std::size_t i);
-		inline void unset_bit(std::size_t i);
-		inline bool get_bit(std::size_t i);
+		// Set the ith bit in the bitmap
+		inline void set_bit(std::size_t i) {
+			freelist_bitmap[i >> 3] |= (1 << (i & 7));
+		}
+		// Unset the ith bit in the bitmap
+		inline void unset_bit(std::size_t i) {
+			freelist_bitmap[i >> 3] &= ~(1 << (i & 7));
+		}
+		// Retrieve the ith bit from the bitmap
+		inline bool get_bit(std::size_t i) {
+			return (freelist_bitmap[i >> 3] >> (i & 7)) & 1;
+		}
 		inline size_t get_next_set_bit(std::size_t i);
 		inline size_t size_to_index(std::size_t size);
 
