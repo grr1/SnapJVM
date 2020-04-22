@@ -18,6 +18,7 @@ ByteCodeGen_X86_64::ByteCodeGen_X86_64(ClassClass *classClass) {
     _classClass = classClass;
     _assembler_X86_64 = new Assembler_X86_64();
     _top = 0;
+    _physicalStackTop = 0;
 
     _stackRegs[0] = "rbx";
     _stackRegs[1] = "r12";
@@ -51,20 +52,23 @@ ByteCodeGen_X86_64::pushVirtualStack() {
     _top++;
     if (_top >= _maxStackRegs) {
         // Save register
-        *this->_codeStrStream << "       movq   %" << getReg() << "," << "-"
-                              << 8 * (_stackFRameJavaStack + _top) << "       # save top=" << _top << "\n";
+//        *this->_codeStrStream << "       movq   %" << getReg() << "," << "-"
+//                              << 8 * (_stackFRameJavaStack + _top) << "       # putting bottom of virtual stack into top of physical stack\n";
+            *this->_codeStrStream << "       pushq   %" << getReg() << "       # putting bottom of virtual stack into top of physical stack\n";
     }
 }
 
 void
 ByteCodeGen_X86_64::popVirtualStack() {
-    _top--;
+    //TODO: We need to find out what is the proper way to restore registers after register spillover
     if (_top >= _maxStackRegs) {
-//         Save register
-        *this->_codeStrStream << "       movq   "
-                              << "-" << 8 * (_stackFRameJavaStack + _top) << ",%" << getReg()
-                              << "       # save top=" << _top << "\n";
+        // Save register
+//        *this->_codeStrStream << "       movq   "
+//                              << "-" << 8 * (_stackFRameJavaStack + _top) << ",%" << getReg()
+//                              << "       # putting top of physical stack into bottom of virtual\n";
+        *this->_codeStrStream << "       popq   %" << getReg() << "       # putting bottom of virtual stack into top of physical stack\n";
     }
+    _top--;
 
     if (_top < 0) {
         printf("********************** ERROR *******************\nTop=%d\n", _top);
@@ -428,11 +432,12 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
                 printf("arg=%d\n", arg);
             }
             ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            pushVirtualStack(); //TODO This may be incorrect due to register spillover
             if (info != NULL) { // skip entries with no info
                 *this->_codeStrStream << "       movq    $0x" << std::hex
                                       << (unsigned long) info->toData(_classClass)
                                       << ", %" << getReg() << "\n";
-                //pushVirtualStack();
+
             }
         }
             break;
@@ -1488,7 +1493,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
                 u8 *valuePtr = _classClass->_staticVars[index];
                 //Move that value into the register
                 // u8 value = *valuePtr;
-                pushVirtualStack();
+                pushVirtualStack(); //TODO: This may be incorrect due to register spillover
                 *_codeStrStream << "	   movq	   $" << valuePtr << ", %rax\n"; //moved in
                 *_codeStrStream << "	   movq	   (%rax)" << ", %" << getReg() << "\n"; //moved in
 
@@ -1532,6 +1537,7 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
                                   << (unsigned long) simplePrintf << ",%rax" << "\n";
             *this->_codeStrStream << "       call   *%rax\n";
             //notImplemented(code);
+                        popVirtualStack();
         }
             break;
 

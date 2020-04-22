@@ -20,6 +20,7 @@ class ByteCodeGen_X86_64 : public ByteCodeGen {
 	Assembler_X86_64 * _assembler_X86_64;
 
 	int _top;
+	int _physicalStackTop;
 	int _maxStackRegs;
 	const char * _stackRegs[16];
 	int _maxArgumentRegs;
