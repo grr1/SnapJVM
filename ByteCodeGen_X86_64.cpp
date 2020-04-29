@@ -60,6 +60,7 @@ ByteCodeGen_X86_64::pushVirtualStack() {
 
 void
 ByteCodeGen_X86_64::popVirtualStack() {
+    _top--;
     if (_top >= _maxStackRegs) {
         // Save register
         *this->_codeStrStream << "       movq   "
