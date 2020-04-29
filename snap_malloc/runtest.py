@@ -107,8 +107,6 @@ if (len(sys.argv) == 3 and sys.argv[1] == '-t'):
     runTest(sys.argv[2], 0, True, 0);
     exit(0);
 
-print(yellow('IMPORTANT:\ntest_out_of_ram is currently expected to fail - see the README\n'))
-
 ret = runSuite('Simple Tests', simpleTests, verbose, 0);
 pointsEarned += ret[0];
 totalPoints += ret[1];
@@ -135,8 +133,8 @@ else:
     fmtColor = red;
 print(fmtColor('\nTotal: ' + str(pointsEarned) + '/' + str(totalPoints)));
 
-print('\nNOTE:\n' +
-      'Additional tests worth an additional 10 points will be used for the final grading');
+#print('\nNOTE:\n' +
+#      'Additional tests worth an additional 10 points will be used for the final grading');
 
 if (len(sys.argv) == 2 and sys.argv[1] == 'all'):
     print();

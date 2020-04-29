@@ -18,7 +18,12 @@ int main() {
 
   printf("Mallocing an additional 8 bytes, which requires more memory from "
          "sbrk, but sbrk will fail\n");
-  void * ptr = malloc(8);
+
+  // updated from original test case, due to conversion to being object-oriented; allocating for mHeap and mPrinter via `new` leaves 12912 bytes extra
+  void* ptr;
+  for (int i = 0; i < 12912; i+=8) {
+    ptr = malloc(8);
+  }
 
   if (ptr == NULL) {
     perror("SUCCESS: Malloc Failed");
