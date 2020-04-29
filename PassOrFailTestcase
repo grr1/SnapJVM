@@ -1,0 +1,14 @@
+Passed:
+	Compare
+	Int
+	Long
+	Loop
+	SimpleArray
+Failed:
+	Add
+	AllDoubles
+	Hello
+	Increment
+	StacicString
+	
+
