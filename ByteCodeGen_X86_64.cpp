@@ -90,9 +90,22 @@ ByteCodeGen_X86_64::codeGen()
     }
 
     _classClass->_methodsArray = new Method[_classClass->_methods_count];
-    _classClass->_methodsDict = new std::map<std::string, InvokeJVMRuntimeFuncPtr>;
+    _classClass->_methodsDict = new std::map<std::string, InvokeJVMRuntimeFuncPtr*>;
 
     _codeStrStream = new std::stringstream();
+
+    // Set method names
+    for (int i = 0; i < _classClass->_methods_count; i++) {
+        _method = &_classClass->_methodsArray[i];
+        MethodInfo * methodInfo = _classClass->_methodInfoArray[i];
+        ConstantPoolInfo *info = _classClass->_constantPoolInfoArray[methodInfo->name_index];
+        CONSTANT_Utf8_info * uinfo = dynamic_cast<CONSTANT_Utf8_info *>(info);
+        if (uinfo == NULL) {
+            printf("(no UTF index #%d)", methodInfo->name_index);
+            return;
+        }
+        _method->_methodName = (char *) uinfo->bytesArray;
+    }
 
     // Print methods
     for (int i = 0; i < _classClass->_methods_count; i++) {
@@ -279,8 +292,7 @@ ByteCodeGen_X86_64::codeGen()
                 _method->_code = _assembler_X86_64->assemble(_method->_codeStr);
                 _method->_callMethod = (InvokeJVMRuntimeFuncPtr) _method->_code;
 
-                _classClass->_methodsDict->insert({_method->_methodName, _method->_callMethod});
-                //TODO: generate "unresolved array" per class
+                _classClass->_methodsDict->insert({_method->_methodName, &(_method->_callMethod)});
             }
         }
         if (SnapJVMRuntime::isVerboseMode()) {
@@ -1275,15 +1287,15 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
     case ByteCode::_freturn:
     case ByteCode::_dreturn:
     case ByteCode::_areturn:{
-        popVirtualStack();
-        *_codeStrStream << "       movq    %" << getReg() << ", " << "%rax" << "\n";        
+            popVirtualStack();
+            *_codeStrStream << "       movq    %" << getReg() << ", " << "%rax" << "\n";        
         }
     case ByteCode::_return:{
-        restoreRegsBeforeReturn();
-        *_codeStrStream << "       # " << ByteCode::_name[code] << "\n";
-        *_codeStrStream << "       movq    %rbp, %rsp\n";
-        *_codeStrStream << "       leave\n";
-        *_codeStrStream << "       ret\n";
+            restoreRegsBeforeReturn();
+            *_codeStrStream << "       # " << ByteCode::_name[code] << "\n";
+            *_codeStrStream << "       movq    %rbp, %rsp\n";
+            *_codeStrStream << "       leave\n";
+            *_codeStrStream << "       ret\n";
         }
         break;
 
@@ -1308,42 +1320,69 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 * codeArray, int k) 
         break;
 
     case ByteCode::_invokevirtual:{
-            /**_codeStrStream << "       mov    $0x" << std::hex
-                                  << (unsigned long) simplePrintf << ",%rax" << "\n";
+            *this->_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
+            //popVirtualStack();
+            *_codeStrStream << "       mov    $0x" << std::hex
+                                  << (unsigned long) simplePrintf << ", %rax" << "\n";
             *_codeStrStream << "       call   *%rax\n";
-            */
-            u1 indexbyte1 = ClassParser::readU1(&codeArray[k+1]);
-            u1 indexbyte2 = ClassParser::readU1(&codeArray[k+2]);
-            int index = (indexbyte1 << 8) || indexbyte2;
 
-            *_codeStrStream << "       #"<< ByteCode::_name[code] << " " << index << "\n";
+            //notImplemented(code);
+        }
+        break;
+
+    case ByteCode::_invokespecial:
+    case ByteCode::_invokestatic:{ 
+            u1 * p = &codeArray[k+1];
+            u1 indexbyte1 = ClassParser::readU1(p);
+            p = &codeArray[k+2];
+            u1 indexbyte2 = ClassParser::readU1(p);
+            //unsigned int index1 = (int)*((char*)(&indexbyte1));
+            //unsigned int index2 = (int)*((char*)(&indexbyte2));
+            unsigned int index = (indexbyte1 << 8) | indexbyte2;
+            //*_codeStrStream << "       # b1:" << (int)(index1) << "    b2:" << (int)(index2) << "\n";
+            *_codeStrStream << "       #"<< ByteCode::_name[code] << " " << (int)index;
             if (SnapJVMRuntime::isVerboseMode()) {
                 printf("arg=%d\n",index);
             }
 
             ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[index];
+            CONSTANT_Methodref_info *minfo = (CONSTANT_Methodref_info *) info;
 
-            if (info != NULL) {
-                CONSTANT_Methodref_info *minfo = (CONSTANT_Methodref_info) info;
-                //u2 class_index
+            //u2 class_index = minfo->class_index;
+            //info = _classClass->_constantPoolInfoArray[class_index];
+            //CONSTANT_Class_info *cinfo = (CONSTANT_Class_info *) info;
+                // ASSUMING CLASS IS CURRENT CLASS
+
+            u2 name_and_type_index = minfo->name_and_type_index;
+            info = _classClass->_constantPoolInfoArray[name_and_type_index];
+            CONSTANT_NameAndType_info *ninfo = (CONSTANT_NameAndType_info *) info;
+            u2 name_index = ninfo->name_index;
+            info = _classClass->_constantPoolInfoArray[name_index];
+            CONSTANT_Utf8_info *uinfo = (CONSTANT_Utf8_info *) info;
+            u1 * bytes = uinfo->bytesArray;
+            u2 length = uinfo->length;
+            std::string mname((char *)bytes, (char *)(bytes + length));
+            u2 descriptor_index = ninfo->descriptor_index;
+            info = _classClass->_constantPoolInfoArray[descriptor_index];
+            uinfo = (CONSTANT_Utf8_info *) info;
+            bytes = uinfo->bytesArray;
+            length = uinfo->length;
+            std::string mdesc((char *)bytes, (char *)(bytes + length));
+
+            *_codeStrStream << " " << mname << " " << mdesc << "\n";
+            Method * method = _classClass->lookupMethod(mname.c_str());
+            if (method == NULL)
+                break;
+            
+            *_codeStrStream << "       mov    $" << std::hex << (int *) &(method->_callMethod) << ", %rax" << "\n";
+            *_codeStrStream << "       mov    (%rax), %rax\n";
+            *_codeStrStream << "       call   *%rax\n";
+
+            if (mdesc.back() != 'V') {
+                *_codeStrStream << "       movq   %rax" << ", " << "%" << getReg() << "\n";
+                pushVirtualStack();
             }
-
-            // TODO: from object table, translate cPool index to assembly label/fp
-            // TODO: call fp
-
-            *_codeStrStream << "       movq   %rax" << ", " << "%" << getReg();
-            pushVirtualStack();
             //notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_invokespecial:{
-          notImplemented(code);
-        }
-        break;
-
-    case ByteCode::_invokestatic:{
-          notImplemented(code);
         }
         break;
 

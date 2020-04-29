@@ -12,6 +12,7 @@ class Method;
 
 #include "ByteCode.hpp"
 #include "ClassParser.hpp"
+#include "SnapJVMRuntime.hpp"
 #include <map>
 
 class ConstantPoolInfo;
@@ -59,7 +60,7 @@ public:
 	Method * _methodsArray;
 
     // Dict with all methods in this class
-    std::map<std::string, InvokeJVMRuntimeFuncPtr> * _methodsDict;
+    std::map<std::string, InvokeJVMRuntimeFuncPtr *> * _methodsDict;
 
 public:
 	ClassClass();

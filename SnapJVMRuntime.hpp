@@ -46,6 +46,9 @@ public:
 
 	// Calls runtime
 	static void * runtime_invokevirtual(SnapJVMRuntime * runTime, Object * o, void *a, void *b, void *c, void *d);
+
+    // Dict with all classes at runtime
+    //std::map<std::string, ClassClass> _classesDict;
 };
 
 inline SnapJVMRuntime *
