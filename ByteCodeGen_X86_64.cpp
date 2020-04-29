@@ -319,7 +319,7 @@ simplePrintfHex(u8 l) {
 }
 
 void simplePrintfD(u8 d) {
-    printf("%lf\n", *(double *) &d);
+    printf("%.2lf\n", *(double *) &d);
 }
 
 
@@ -1641,16 +1641,49 @@ void ByteCodeGen_X86_64::codeGenOne(ByteCode::Code code, u1 *codeArray, int k) {
             break;
 
         case ByteCode::_invokevirtual: {
-            *this->_codeStrStream << "";
-			*this->_codeStrStream << "       #"<< ByteCode::_name[code] <<"\n";
-            //*this->_codeStrStream << "";
-            *this->_codeStrStream << "       #" << ByteCode::_name[code] << "\n";
+            u1 * p1 = &codeArray[k+1];
+            u1 arg1 = ClassParser::readU1(p1);
+            u1 * p2 = &codeArray[k+2];
+            u1 arg2 = ClassParser::readU1(p2);
+            int arg = ((int)arg1) << 8;
+            arg = arg | ((int)arg2);
+            *this->_codeStrStream << "       #" << ByteCode::_name[code] << " #" << arg << "\n";
             popVirtualStack();
             *this->_codeStrStream << "       mov    %" << getReg() << ", %rdi\n";
-            *this->_codeStrStream << "       mov    $0x" << std::hex
+
+            ConstantPoolInfoPtr info = _classClass->_constantPoolInfoArray[arg];
+            CONSTANT_Methodref_info *minfo = (CONSTANT_Methodref_info *) info;
+            u2 ntypeindex = minfo->name_and_type_index;
+            ConstantPoolInfoPtr ntinfo = _classClass->_constantPoolInfoArray[(short)ntypeindex];
+            CONSTANT_NameAndType_info *nametypeinfo = (CONSTANT_NameAndType_info *) ntinfo;
+            u2 desIndex = nametypeinfo->descriptor_index;
+            ConstantPoolInfoPtr deinfo = _classClass->_constantPoolInfoArray[(short)desIndex];
+            CONSTANT_Utf8_info *uinfo = (CONSTANT_Utf8_info *)deinfo;
+            u2 len = uinfo->length;
+            u1* desstr = uinfo->bytesArray;
+            std::string descstr((char*)desstr);
+
+            std::string ddesc("(D)");
+            std::string idesc("(I)");
+            std::string sdesc("(Ljava/lang/String;)");
+            std::string fdesc("(F)");
+            std::string ldesc("(J)");
+            *this->_codeStrStream << "      # descriptor = "<< descstr << "\n";
+            if (descstr.find(ddesc) != std::string::npos || descstr.find(fdesc) != std::string::npos){
+                *this->_codeStrStream <<"       # printing double\n";
+                *this->_codeStrStream << "       mov    $0x" << std::hex
+                                  << (unsigned long) simplePrintfD << ",%rax" << "\n";
+            } else if (descstr.find(idesc) != std::string::npos || descstr.find(ldesc) != std::string::npos){
+                *this->_codeStrStream << "      # printing Int\n";
+                *this->_codeStrStream << "       mov    $0x" << std::hex
+                                  << (unsigned long) simplePrintfHex << ",%rax" << "\n";
+            } else {
+                *this->_codeStrStream << "      #printing string\n";
+                *this->_codeStrStream << "       mov    $0x" << std::hex
                                   << (unsigned long) simplePrintf << ",%rax" << "\n";
+            }
+
             *this->_codeStrStream << "       call   *%rax\n";
-            //notImplemented(code);
         }
             break;
 

@@ -9,11 +9,11 @@ public class AllDoubles{
 		double div = a/one;
 		double add = a+b;
 		double minus = a-b;
-		System.out.println("negative one = "+negone);
-		System.out.println("5.5 - 6 = " + minus);
-		System.out.println("5.5 + 6.0 = " + add);
-		System.out.println("5.5 * 1 = " + mul);
-		System.out.println("5.5/1 = " + div);
+		System.out.println(negone);
+		System.out.println( minus);
+		System.out.println(add);
+		System.out.println(mul);
+		System.out.println(div);
 	}
 
 
